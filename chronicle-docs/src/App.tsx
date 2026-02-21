@@ -3,41 +3,63 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import './App.css';
 
-const docs: Record<string, string> = {
-  'introduction': `# CHRONICLE Documentation
+const docs: Record<string, { title: string; content: string }> = {
+  'introduction': {
+    title: 'Introduction',
+    content: `# CHRONICLE
 
-Welcome to CHRONICLE - permanent storage for AI agents.
+Permanent storage for AI agents. Store data forever on Arweave with x402 micropayments.
 
 ## Overview
 
 CHRONICLE is an x402-powered storage service that enables AI agents to store data permanently on Arweave. Built on Virtuals Protocol ACP, it provides:
 
-- **Permanent Storage**: Data lives forever on Arweave
-- **x402 Payments**: Automatic micropayments via USDC
-- **Encryption**: Client-side AES-256-GCM encryption
-- **Closed-Loop Economics**: Pass-through payments, no startup capital
+<div class="docs-features">
+  <div class="docs-feature">
+    <div class="docs-feature-icon">∞</div>
+    <h4>Permanent Storage</h4>
+    <p>Data lives forever on Arweave blockchain</p>
+  </div>
+  <div class="docs-feature">
+    <div class="docs-feature-icon">⚡</div>
+    <h4>x402 Payments</h4>
+    <p>Automatic micropayments via USDC</p>
+  </div>
+  <div class="docs-feature">
+    <div class="docs-feature-icon">🔐</div>
+    <h4>AES-256-GCM</h4>
+    <p>Client-side encryption support</p>
+  </div>
+  <div class="docs-feature">
+    <div class="docs-feature-icon">🔄</div>
+    <h4>Closed-Loop</h4>
+    <p>Pass-through payments, no capital needed</p>
+  </div>
+</div>
 
 ## Quick Links
 
-- [Getting Started](/docs/getting-started)
-- [Architecture](/docs/architecture)
-- [API Reference](/docs/api)
-- [ACP Integration](/docs/acp)
-- [Agent Skill](/docs/skill)
+<div class="docs-quick-links">
+  <a href="#getting-started" class="docs-quick-link">→ Getting Started</a>
+  <a href="#api" class="docs-quick-link">→ API Reference</a>
+  <a href="#acp" class="docs-quick-link">→ ACP Integration</a>
+</div>
 
 ## Use Cases
 
 - **AI Agent Memory**: Store long-term memories and journals
-- **Audit Trails**: Immutable records of decisions
+- **Audit Trails**: Immutable records of decisions  
 - **Encrypted Secrets**: Secure storage for sensitive data
 
 ## Pricing
 
-- Base: $0.01 USDC per request
+- Base: **$0.01 USDC** per request
 - Scaling: +10% markup over Turbo storage costs
-- Payment: USDC via x402 on Base chain`,
+- Payment: USDC via x402 on Base chain`},
 
-  'getting-started': `# Getting Started
+  'getting-started': {
+    title: 'Getting Started',
+    content: `# Getting Started
 
 ## Prerequisites
 
@@ -48,33 +70,35 @@ CHRONICLE is an x402-powered storage service that enables AI agents to store dat
 ## Installation
 
 \`\`\`bash
-# Clone the agent
-git clone https://github.com/your-org/chronicle-agent
-cd chronicle-agent
+# Clone the repository
+git clone https://github.com/your-org/chronicle
+cd chronicle
 
 # Install dependencies
 npm install
-
-# Copy environment file
-cp .env.example .env
 \`\`\`
 
 ## Configuration
 
-Set your EVM private key in \`.env\`:
+Copy the environment file:
 
-\`\`\`env
+\`\`\`bash
+cp chronicle-agent/.env.example chronicle-agent/.env
+\`\`\`
+
+Edit \`.env\` and add your EVM private key:
+
+\`\`\`
 EVM_PRIVATE_KEY=0x...
 \`\`\`
 
 ## Running the Agent
 
 \`\`\`bash
-# Build
+# Start the API server
+cd chronicle-agent
 npm run build
-
-# Start
-npm start
+npm run start:api
 \`\`\`
 
 ## ACP Setup
@@ -104,19 +128,21 @@ acp sell create chronicle-storage
 5. Start serving:
 \`\`\`bash
 acp serve start
-\`\`\``,
+\`\`\``},
 
-  'architecture': `# Architecture
+  'architecture': {
+    title: 'Architecture',
+    content: `# Architecture
 
 ## System Overview
 
 \`\`\`
 Users (AI Agents)
        │
-       ▼ (x402 Payment in USDC)
+       ▼ x402 Payment in USDC
 CHRONICLE Agent
        │
-       ▼ (Pass-through payment)
+       ▼ Pass-through payment
   Turbo Upload
        │
        ▼
@@ -128,7 +154,7 @@ CHRONICLE Agent
 ### 1. Upload Service
 - Handles data upload to Turbo
 - Manages x402 payment flow
-- Adds metadata tags
+- Adds metadata tags for Arweave
 
 ### 2. Pricing Service
 - Queries Turbo pricing API
@@ -136,9 +162,14 @@ CHRONICLE Agent
 - Returns calculated price
 
 ### 3. Encryption Helpers
-- AES-256-GCM encryption
+- AES-256-GCM encryption utilities
 - IV generation
-- Key management utilities
+- Key management functions
+
+### 4. Database (SQLite)
+- Tracks user uploads
+- Enables export functionality
+- Stores wallet addresses
 
 ## Data Flow
 
@@ -151,12 +182,14 @@ CHRONICLE Agent
 
 ## Security
 
-- All encryption is client-side
+- All encryption is **client-side**
 - Agent never sees unencrypted data
 - Keys are managed by the client
-- Arweave provides immutability`,
+- Arweave provides immutability`},
 
-  'api': `# API Reference
+  'api': {
+    title: 'API Reference',
+    content: `# API Reference
 
 ## Upload Functions
 
@@ -198,7 +231,7 @@ const result = await executeJob({
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | \`data\` | string | yes | Data to store |
-| \`type\` | string | yes | One of: image, markdown, json |
+| \`type\` | string | yes | One of: \`image\`, \`markdown\`, \`json\` |
 | \`encrypted\` | boolean | no | Whether data is encrypted |
 | \`cipherIv\` | string | no | AES-256-GCM IV (if encrypted) |
 
@@ -216,10 +249,12 @@ const result = await executeJob({
 
 ## Pricing
 
-- Base price: $0.01 USDC
-- Formula: \`max(0.01, (bytes / 1024) * 0.001 * 1.10)\``,
+- Base price: **$0.01 USDC**
+- Formula: \`max(0.01, (bytes / 1024) * 0.001 * 1.10)\``},
 
-  'acp': `# ACP Integration
+  'acp': {
+    title: 'ACP Integration',
+    content: `# ACP Integration
 
 ## What is ACP?
 
@@ -288,14 +323,46 @@ acp serve start
     }
   }
 }
+\`\`\``},
+
+  'skill': {
+    title: 'Agent Skill',
+    content: `# Agent Skill
+
+## Quick Start for AI Agents
+
+Install the CHRONICLE skill to enable your agent to store data:
+
+\`\`\`bash
+npx skills add https://chronicle.agent/skill.md --skill chronicle
 \`\`\`
 
-## Job Flow
+## For Developers
 
-1. Client calls ACP job endpoint
-2. x402 payment is processed
-3. Handler executes upload
-4. Result returned to client`,
+The full skill documentation is available at:
+
+<div class="docs-skill-box">
+  <h3>Agent Skill File</h3>
+  <p>Complete API reference for programmatic access</p>
+  <code class="docs-skill-code">/skill.md</code>
+</div>
+
+## Authentication
+
+Include wallet signature in headers:
+
+\`\`\`javascript
+const signature = await wallet.signMessage('CHRONICLE auth');
+headers: {
+  'Authorization': \`Bearer \${address}:\${signature}\`
+}
+\`\`\`
+
+## Endpoints
+
+- \`POST /api/upload\` - Upload data
+- \`GET /api/uploads\` - List user uploads  
+- \`GET /api/uploads/export?format=json|csv\` - Export data`},
 };
 
 function App() {
@@ -310,46 +377,47 @@ function App() {
     { id: 'skill', label: 'Agent Skill' },
   ];
 
-  const content = activeDoc === 'skill' 
-    ? null // Will load from file
-    : docs[activeDoc] || docs['introduction'];
+  const currentDoc = docs[activeDoc];
 
   return (
     <div className="docs-app">
       <header className="docs-header">
-        <a href="/" className="docs-logo">CHRONICLE</a>
-        <span className="docs-tagline">Permanent Storage for AI Agents</span>
+        <div className="docs-logo">
+          <div className="docs-logo-icon">C</div>
+          <span className="docs-logo-text">CHRONICLE</span>
+        </div>
+        <nav className="docs-header-nav">
+          <a href="#" className="docs-header-link">Docs</a>
+          <a href="#" className="docs-header-link">GitHub</a>
+        </nav>
       </header>
       
-      <div className="docs-container">
-        <nav className="docs-sidebar">
-          <ul className="nav-list">
-            {navItems.map(item => (
-              <li key={item.id}>
-                <button
-                  className={"nav-item " + (activeDoc === item.id ? 'active' : '')}
-                  onClick={() => setActiveDoc(item.id)}
-                >
-                  {item.label}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </nav>
+      <div className="docs-layout">
+        <aside className="docs-sidebar">
+          <div className="docs-sidebar-section">
+            <div className="docs-sidebar-title">Documentation</div>
+            <ul className="docs-sidebar-nav">
+              {navItems.map(item => (
+                <li key={item.id}>
+                  <a
+                    href="#"
+                    className={"docs-sidebar-link " + (activeDoc === item.id ? 'active' : '')}
+                    onClick={(e) => { e.preventDefault(); setActiveDoc(item.id); }}
+                  >
+                    {item.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </aside>
         
-        <main className="docs-content">
-          {activeDoc === 'skill' ? (
-            <div className="skill-notice">
-              <h2>Agent Skill</h2>
-              <p>The Agent Skill documentation is available at:</p>
-              <code>/skill.md</code>
-              <p>Download or view the skill file directly from the frontend.</p>
-            </div>
-          ) : (
+        <main className="docs-main">
+          <div className="docs-content">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>
-              {content}
+              {currentDoc.content}
             </ReactMarkdown>
-          )}
+          </div>
         </main>
       </div>
     </div>
