@@ -1,8 +1,10 @@
 import express from 'express';
+import cors from 'cors';
 import { getUserUploads, getUserUploadCount, exportUploadsJson, exportUploadsCsv, recordUpload } from '../src/services/database.js';
 import { UploadService } from '../src/services/upload.js';
 
 const app = express();
+app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
 const AUTH_HEADER = process.env.API_AUTH_HEADER || 'authorization';
