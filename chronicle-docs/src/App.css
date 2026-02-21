@@ -1,0 +1,245 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --bg-primary: #0a0a0a;
+  --bg-secondary: #141414;
+  --bg-tertiary: #1a1a1a;
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.6);
+  --text-muted: rgba(255, 255, 255, 0.4);
+  --accent: #22c55e;
+  --accent-hover: #4ade80;
+  --border: rgba(255, 255, 255, 0.08);
+  --code-bg: #1e1e1e;
+}
+
+body {
+  font-family: 'Inter', -apple-system, sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.6;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.docs-app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.docs-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 32px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+}
+
+.docs-logo {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  color: var(--text-primary);
+  text-decoration: none;
+}
+
+.docs-tagline {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.docs-container {
+  display: flex;
+  flex: 1;
+}
+
+.docs-sidebar {
+  width: 240px;
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border);
+  padding: 24px 0;
+  flex-shrink: 0;
+}
+
+.nav-list {
+  list-style: none;
+}
+
+.nav-item {
+  width: 100%;
+  padding: 12px 24px;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.nav-item:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.nav-item.active {
+  color: var(--accent);
+  background: rgba(34, 197, 94, 0.1);
+  border-right: 2px solid var(--accent);
+}
+
+.docs-content {
+  flex: 1;
+  padding: 40px 60px;
+  max-width: 800px;
+  overflow-y: auto;
+}
+
+.docs-content h1 {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 24px;
+  letter-spacing: -0.5px;
+}
+
+.docs-content h2 {
+  font-size: 24px;
+  font-weight: 600;
+  margin: 32px 0 16px;
+  color: var(--text-primary);
+}
+
+.docs-content h3 {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 24px 0 12px;
+}
+
+.docs-content p {
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+}
+
+.docs-content ul, .docs-content ol {
+  margin: 16px 0;
+  padding-left: 24px;
+  color: var(--text-secondary);
+}
+
+.docs-content li {
+  margin-bottom: 8px;
+}
+
+.docs-content code {
+  font-family: 'JetBrains Mono', monospace;
+  background: var(--code-bg);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 13px;
+  color: var(--accent);
+}
+
+.docs-content pre {
+  background: var(--code-bg);
+  padding: 16px;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 16px 0;
+}
+
+.docs-content pre code {
+  background: none;
+  padding: 0;
+  color: var(--text-primary);
+}
+
+.docs-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 16px 0;
+}
+
+.docs-content th, .docs-content td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+.docs-content th {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.docs-content td {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.docs-content a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.docs-content a:hover {
+  text-decoration: underline;
+}
+
+.skill-notice {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.skill-notice h2 {
+  margin-bottom: 16px;
+}
+
+.skill-notice code {
+  display: inline-block;
+  margin: 16px 0;
+  font-size: 16px;
+}
+
+@media (max-width: 768px) {
+  .docs-container {
+    flex-direction: column;
+  }
+  
+  .docs-sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+  
+  .nav-list {
+    display: flex;
+    overflow-x: auto;
+    padding: 0 16px;
+  }
+  
+  .nav-item {
+    white-space: nowrap;
+    border-right: none;
+    border-bottom: 2px solid transparent;
+  }
+  
+  .nav-item.active {
+    border-right: none;
+    border-bottom: 2px solid var(--accent);
+  }
+  
+  .docs-content {
+    padding: 24px;
+  }
+}

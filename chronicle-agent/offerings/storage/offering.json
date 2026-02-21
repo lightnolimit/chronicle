@@ -1,0 +1,49 @@
+{
+  "name": "chronicle-storage",
+  "description": "Persistent storage service for AI agents. Store images, markdown, and JSON data on Arweave with optional encryption.",
+  "fee": "0.01",
+  "requirements": {
+    "type": "object",
+    "properties": {
+      "data": {
+        "type": "string",
+        "description": "The data to store (base64 encoded for images, plain text for markdown/json)"
+      },
+      "type": {
+        "type": "string",
+        "enum": ["image", "markdown", "json"],
+        "description": "Type of data being stored"
+      },
+      "encrypted": {
+        "type": "boolean",
+        "description": "Whether the data is pre-encrypted",
+        "default": false
+      },
+      "cipherIv": {
+        "type": "string",
+        "description": "Base64-encoded IV for AES-256-GCM decryption (required if encrypted is true)"
+      }
+    },
+    "required": ["data", "type"]
+  },
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "data": { "type": "string" },
+      "type": { "type": "string", "enum": ["image", "markdown", "json"] },
+      "encrypted": { "type": "boolean" },
+      "cipherIv": { "type": "string" }
+    },
+    "required": ["data", "type"]
+  },
+  "outputSchema": {
+    "type": "object",
+    "properties": {
+      "id": { "type": "string", "description": "Arweave transaction ID" },
+      "url": { "type": "string", "description": "Arweave URL to access the data" },
+      "type": { "type": "string" },
+      "encrypted": { "type": "boolean" },
+      "timestamp": { "type": "number" }
+    }
+  }
+}

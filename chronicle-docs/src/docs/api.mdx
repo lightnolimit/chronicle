@@ -1,0 +1,62 @@
+# API Reference
+
+## Upload Functions
+
+### upload_image
+
+Store image data on Arweave.
+
+```typescript
+const result = await executeJob({
+  data: base64ImageData,
+  type: 'image',
+});
+```
+
+### upload_markdown
+
+Store markdown content.
+
+```typescript
+const result = await executeJob({
+  data: '# My Journal\n\nEntry...',
+  type: 'markdown',
+});
+```
+
+### upload_json
+
+Store JSON data.
+
+```typescript
+const result = await executeJob({
+  data: JSON.stringify({ key: 'value' }),
+  type: 'json',
+});
+```
+
+## Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `data` | string | yes | Data to store |
+| `type` | string | yes | One of: image, markdown, json |
+| `encrypted` | boolean | no | Whether data is encrypted |
+| `cipherIv` | string | no | AES-256-GCM IV (if encrypted) |
+
+## Response
+
+```typescript
+{
+  id: string;      // Arweave transaction ID
+  url: string;     // arweave.net URL
+  type: string;    // image, markdown, or json
+  encrypted: boolean;
+  timestamp: number;
+}
+```
+
+## Pricing
+
+- Base price: $0.01 USDC
+- Formula: `max(0.01, (bytes / 1024) * 0.001 * 1.10)`
