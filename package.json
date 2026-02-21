@@ -1,6 +1,7 @@
 {
   "name": "chronicle",
   "private": true,
+  "packageManager": "npm@10.9.0",
   "scripts": {
     "dev": "turbo run dev",
     "dev:frontend": "npm run dev --workspace=chronicle-frontend",
@@ -10,8 +11,7 @@
     "build": "turbo run build",
     "build:frontend": "npm run build --workspace=chronicle-frontend",
     "build:agent": "npm run build --workspace=chronicle-agent",
-    "build:docs": "npm run build --workspace=chronicle-docs",
-    "install:all": "npm install && npm install --workspace=chronicle-agent && npm install --workspace=chronicle-frontend && npm install --workspace=chronicle-docs"
+    "build:docs": "npm run build --workspace=chronicle-docs"
   },
   "workspaces": [
     "chronicle-agent",
