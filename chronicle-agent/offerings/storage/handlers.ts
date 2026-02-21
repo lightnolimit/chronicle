@@ -42,7 +42,7 @@ export async function executeJob(requirements: JobRequirements): Promise<JobResu
   }
 
   if (walletAddress) {
-    const sizeBytes = typeof data === 'string' ? new TextEncoder().encode(data).length : data.length;
+    const sizeBytes = new TextEncoder().encode(data).length;
     const costUsd = Math.max(0.01, (sizeBytes / 1024) * 0.001 * 1.1);
     recordUpload(walletAddress, result.id, result.url, type, encrypted || false, sizeBytes, costUsd);
   }

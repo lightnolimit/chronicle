@@ -3,22 +3,29 @@
   "private": true,
   "packageManager": "npm@10.9.0",
   "scripts": {
-    "dev": "turbo run dev",
+    "install:all": "npm install && npm install --workspace=chronicle-agent && npm install --workspace=chronicle-frontend && npm install --workspace=chronicle-docs && npm install --workspace=chronicle-dev-docs && npm install --workspace=penny-site",
+    "dev": "npm run dev:api & npm run dev:frontend & wait",
+    "dev:docs": "npm run dev --workspace=chronicle-docs",
+    "dev:dev-docs": "npm run dev --workspace=chronicle-dev-docs",
     "dev:frontend": "npm run dev --workspace=chronicle-frontend",
     "dev:agent": "npm run dev --workspace=chronicle-agent",
     "dev:api": "npm run dev:api --workspace=chronicle-agent",
-    "dev:docs": "npm run dev --workspace=chronicle-docs",
-    "build": "turbo run build",
-    "build:frontend": "npm run build --workspace=chronicle-frontend",
-    "build:agent": "npm run build --workspace=chronicle-agent",
-    "build:docs": "npm run build --workspace=chronicle-docs"
+    "dev:penny": "npm run dev --workspace=penny-site"
   },
   "workspaces": [
     "chronicle-agent",
     "chronicle-frontend",
-    "chronicle-docs"
+    "chronicle-docs",
+    "chronicle-dev-docs",
+    "penny-site"
   ],
   "devDependencies": {
     "turbo": "^2.3.0"
-  }
+  },
+  "version": "1.0.0",
+  "main": "index.js",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": ""
 }

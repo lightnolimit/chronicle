@@ -1,0 +1,44 @@
+site_name: CHRONICLE Dev Docs
+site_description: Internal developer documentation for CHRONICLE
+site_url: https://dev.chronicle.ai
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+  font:
+    text: Inter
+    code: JetBrains Mono
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - admonition
+  - pymdownx.details
+  - attr_list
+
+nav:
+  - Home: index.md
+  - Architecture: architecture.md
+  - Pricing: pricing.md
+  - x402 Integration: x402.md
+  - Virtuals ACP: acp.md
+
+plugins:
+  - search

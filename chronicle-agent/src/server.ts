@@ -1,10 +1,12 @@
 import express from 'express';
-import { getUserUploads, getUserUploadCount, exportUploadsJson, exportUploadsCsv } from '../src/services/database.js';
+import { getUserUploads, getUserUploadCount, exportUploadsJson, exportUploadsCsv, recordUpload } from '../src/services/database.js';
+import { UploadService } from '../src/services/upload.js';
 
 const app = express();
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 
 const AUTH_HEADER = process.env.API_AUTH_HEADER || 'authorization';
+const EVM_PRIVATE_KEY = process.env.EVM_PRIVATE_KEY;
 
 function authenticate(req: express.Request): string | null {
   const auth = req.headers[AUTH_HEADER.toLowerCase()] as string;
@@ -19,6 +21,76 @@ function authenticate(req: express.Request): string | null {
   
   return parts[0];
 }
+
+app.post('/api/upload', async (req, res) => {
+  const walletAddress = authenticate(req);
+  if (!walletAddress) {
+    return res.status(401).json({ error: 'AUTH_REQUIRED', message: 'Missing or invalid authorization header' });
+  }
+
+  const { data, type, name, encrypted } = req.body;
+
+  if (!data || !type) {
+    return res.status(400).json({ error: 'INVALID_REQUEST', message: 'Missing data or type' });
+  }
+
+  if (!EVM_PRIVATE_KEY) {
+    return res.status(500).json({ error: 'SERVER_NOT_CONFIGURED', message: 'Server not configured for uploads' });
+  }
+
+  try {
+    const uploadService = new UploadService(EVM_PRIVATE_KEY);
+    const contentType = type === 'markdown' ? 'text/markdown' : 'application/json';
+
+    const result = await uploadService.upload({
+      data,
+      contentType,
+      encrypted: encrypted || false,
+      tags: [
+        { name: 'Type', value: type },
+        { name: 'Service', value: 'CHRONICLE' },
+        { name: 'Document-Name', value: name || 'Untitled' },
+      ],
+    });
+
+    const sizeBytes = new TextEncoder().encode(data).length;
+    const priceUsd = calculatePrice(sizeBytes);
+
+    recordUpload(
+      walletAddress,
+      result.id,
+      result.url,
+      type,
+      result.encrypted || false,
+      sizeBytes,
+      priceUsd
+    );
+
+    res.json({
+      success: true,
+      id: result.id,
+      url: result.url,
+      priceUsd,
+    });
+  } catch (error: any) {
+    console.error('Upload error:', error);
+    res.status(500).json({ error: 'UPLOAD_FAILED', message: error.message || 'Upload failed' });
+  }
+});
+
+function calculatePrice(sizeBytes: number): number {
+  const basePrice = 0.01;
+  const pricePerByte = 0.0000001;
+  const calculated = basePrice + (sizeBytes * pricePerByte);
+  return Math.round(calculated * 100) / 100;
+}
+
+app.get('/api/price', (req, res) => {
+  const { size } = req.query;
+  const sizeBytes = parseInt(size as string) || 0;
+  const priceUsd = calculatePrice(sizeBytes);
+  res.json({ priceUsd, sizeBytes });
+});
 
 app.get('/api/uploads', (req, res) => {
   const walletAddress = authenticate(req);
