@@ -141,7 +141,7 @@ function SplashScreen({ onComplete, isDarkMode }: { onComplete: () => void; isDa
         <div className="welcome">
           <div className="welcome_screen">
             <div className={`welcome_illustration ${isDarkMode ? 'dark-mode' : ''}`} />
-            <span>Welcome to Macintosh</span>
+            <span>Welcome to Chronicle</span>
           </div>
         </div>
       )}
@@ -419,12 +419,16 @@ function DocumentEditor({
   onSubmit, 
   onSave,
   currentDoc,
+  onOpenWallet,
+  isWalletConnected,
 }: { 
   onSubmit: (content: string, type: string, name: string) => Promise<void>; 
   onSave: (name: string, content: string, type: 'markdown' | 'json') => void;
   documents?: Document[];
   onLoadDocument?: (doc: Document) => void;
   currentDoc: Document | null;
+  onOpenWallet?: () => void;
+  isWalletConnected?: boolean;
 }) {
   const [content, setContent] = useState(currentDoc?.content || '');
   const [docName, setDocName] = useState(currentDoc?.name || 'Untitled');
@@ -467,6 +471,10 @@ function DocumentEditor({
 
   const handleSubmit = async () => {
     if (!content.trim()) return;
+    if (!isWalletConnected) {
+      onOpenWallet?.();
+      return;
+    }
     setUploading(true);
     try {
       await onSubmit(content, docType, docName);
@@ -966,6 +974,8 @@ export default function App() {
                 documents={documents}
                 onLoadDocument={handleOpenDocument}
                 currentDoc={currentDocument}
+                onOpenWallet={handleOpenWallet}
+                isWalletConnected={!!address}
               />
             )}
             {window.id === 'documents' && (
