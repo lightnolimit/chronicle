@@ -88,6 +88,26 @@ function saveHiddenUploads(hiddenIds: string[]) {
   localStorage.setItem('chronicle-hidden-uploads', JSON.stringify(hiddenIds));
 }
 
+interface TrashItem {
+  id: string;
+  name: string;
+  type: string;
+  timestamp: number;
+}
+
+function loadTrash(): TrashItem[] {
+  try {
+    const saved = localStorage.getItem('chronicle-trash');
+    return saved ? JSON.parse(saved) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveTrash(items: TrashItem[]) {
+  localStorage.setItem('chronicle-trash', JSON.stringify(items));
+}
+
 function SplashScreen({ onComplete, isDarkMode }: { onComplete: () => void; isDarkMode: boolean }) {
   const [showWelcome, setShowWelcome] = useState(false);
 
@@ -129,7 +149,13 @@ function SplashScreen({ onComplete, isDarkMode }: { onComplete: () => void; isDa
   );
 }
 
-function MenuBar({ onOpenWallet, isDarkMode, onToggleDark }: { onOpenWallet: () => void; isDarkMode: boolean; onToggleDark: () => void }) {
+function MenuBar({ onOpenWallet, isDarkMode, onToggleDark, showHidden, onToggleShowHidden }: { 
+  onOpenWallet: () => void; 
+  isDarkMode: boolean; 
+  onToggleDark: () => void;
+  showHidden?: boolean;
+  onToggleShowHidden?: () => void;
+}) {
   const [showMenu, setShowMenu] = useState<string | null>(null);
   const { address, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
@@ -151,6 +177,11 @@ function MenuBar({ onOpenWallet, isDarkMode, onToggleDark }: { onOpenWallet: () 
   const handleToggleDark = () => {
     setShowMenu(null);
     onToggleDark();
+  };
+
+  const handleToggleShowHidden = () => {
+    setShowMenu(null);
+    onToggleShowHidden?.();
   };
 
   const menus = [
@@ -182,6 +213,9 @@ function MenuBar({ onOpenWallet, isDarkMode, onToggleDark }: { onOpenWallet: () 
       { label: 'Clean Up', action: () => {} },
       { label: '────────────', disabled: true },
       { label: isDarkMode ? 'Light Mode' : 'Dark Mode', action: handleToggleDark },
+      ...(onToggleShowHidden ? [
+        { label: showHidden ? 'Hide Hidden Files' : 'Show Hidden Files', action: handleToggleShowHidden },
+      ] : []),
       { label: '────────────', disabled: true },
       { label: 'Enter Full Screen', action: () => {} },
     ]},
@@ -281,27 +315,82 @@ function Window({
   window, 
   onClose, 
   onFocus,
+  onMove,
+  onResize,
   children,
   isActive 
 }: { 
   window: WindowState; 
   onClose: () => void;
   onFocus: () => void;
+  onMove?: (x: number, y: number) => void;
+  onResize?: (width: number, height: number) => void;
   children: React.ReactNode;
   isActive: boolean;
 }) {
   const windowRef = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isResizing, setIsResizing] = useState(false);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
 
   const handleMouseDown = () => {
     onFocus();
   };
+
+  const handleHeaderMouseDown = (e: React.MouseEvent) => {
+    if ((e.target as HTMLElement).tagName === 'BUTTON') return;
+    e.preventDefault();
+    setIsDragging(true);
+    setDragOffset({
+      x: e.clientX - window.x,
+      y: e.clientY - window.y,
+    });
+    onFocus();
+  };
+
+  const handleResizeMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsResizing(true);
+    onFocus();
+  };
+
+  useEffect(() => {
+    if (!isDragging && !isResizing) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (isDragging && onMove) {
+        const newX = e.clientX - dragOffset.x;
+        const newY = e.clientY - dragOffset.y;
+        onMove(Math.max(0, newX), Math.max(0, newY));
+      }
+      if (isResizing && onResize && windowRef.current) {
+        const newWidth = Math.max(200, e.clientX - windowRef.current.getBoundingClientRect().left);
+        const newHeight = Math.max(150, e.clientY - windowRef.current.getBoundingClientRect().top);
+        onResize(newWidth, newHeight);
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+      setIsResizing(false);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging, isResizing, dragOffset, onMove, onResize]);
 
   if (!window.visible) return null;
 
   return (
     <div
       ref={windowRef}
-      className={`window ${isActive ? 'active' : ''}`}
+      className={`window ${isActive ? 'active' : ''} ${isDragging ? 'dragging' : ''}`}
       style={{
         left: window.x,
         top: window.y,
@@ -311,7 +400,7 @@ function Window({
       }}
       onMouseDown={handleMouseDown}
     >
-      <div className="window-header">
+      <div className="window-header" onMouseDown={handleHeaderMouseDown}>
         <button className="close-btn" onClick={onClose} />
         <div className="window-bars">
           <hr /><hr /><hr /><hr /><hr /><hr />
@@ -321,6 +410,7 @@ function Window({
       <div className="window-body">
         {children}
       </div>
+      <div className="window-resize" onMouseDown={handleResizeMouseDown} />
     </div>
   );
 }
@@ -442,7 +532,6 @@ function DocumentsWindow({
   onOpenDocument,
   onDeleteDocument,
   onHideUpload,
-  onShowHidden,
   showHidden,
   hiddenUploads,
 }: { 
@@ -451,7 +540,6 @@ function DocumentsWindow({
   onOpenDocument: (doc: Document) => void;
   onDeleteDocument: (id: string) => void;
   onHideUpload?: (id: string) => void;
-  onShowHidden?: () => void;
   showHidden?: boolean;
   hiddenUploads?: UploadedDoc[];
   onLoadDocument?: (doc: Document) => void;
@@ -490,18 +578,7 @@ function DocumentsWindow({
       </div>
       
       <div className="docs-section">
-        <div className="docs-section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span>Permaweb Uploads</span>
-          {onShowHidden && (
-            <button 
-              className="toggle-hidden-btn"
-              onClick={onShowHidden}
-              style={{ fontSize: '10px', padding: '2px 8px', cursor: 'pointer' }}
-            >
-              {showHidden ? 'Hide Hidden' : 'Show Hidden'}
-            </button>
-          )}
-        </div>
+        <div className="docs-section-header">Permaweb Uploads</div>
         {visibleUploads.length === 0 ? (
           <div className="docs-empty">No uploads yet</div>
         ) : (
@@ -547,16 +624,38 @@ function DocumentsWindow({
   );
 }
 
-function TrashWindow({ uploads }: { uploads: UploadedDoc[] }) {
+function TrashWindow({ 
+  trashItems, 
+  onEmptyTrash,
+}: { 
+  trashItems?: TrashItem[];
+  onEmptyTrash?: () => void;
+}) {
   return (
     <div className="trash-content">
-      {uploads.length === 0 ? (
+      {trashItems && trashItems.length > 0 && (
+        <div style={{ padding: '8px', borderBottom: '1px solid var(--border-light)', marginBottom: '8px' }}>
+          <button 
+            onClick={onEmptyTrash}
+            style={{ 
+              fontFamily: 'ChicagoFLF', 
+              fontSize: '11px', 
+              padding: '4px 12px',
+              cursor: 'pointer',
+            }}
+          >
+            Empty Trash
+          </button>
+        </div>
+      )}
+      {!trashItems || trashItems.length === 0 ? (
         <div className="trash-empty">Trash is Empty</div>
       ) : (
         <div className="trash-grid">
-          {uploads.map(upload => (
-            <div key={upload.id} className="trash-item">
-              <span className="trash-item-type">{upload.type}</span>
+          {trashItems.map(item => (
+            <div key={item.id} className="trash-item">
+              <span className="trash-item-name">{item.name}</span>
+              <span className="trash-item-type">{item.type}</span>
             </div>
           ))}
         </div>
@@ -665,10 +764,15 @@ export default function App() {
   });
   const [hiddenUploadIds, setHiddenUploadIds] = useState<string[]>(loadHiddenUploads);
   const [showHidden, setShowHidden] = useState(false);
+  const [trash, setTrash] = useState<TrashItem[]>(loadTrash);
 
   useEffect(() => {
     saveHiddenUploads(hiddenUploadIds);
   }, [hiddenUploadIds]);
+
+  useEffect(() => {
+    saveTrash(trash);
+  }, [trash]);
 
   const handleHideUpload = (id: string) => {
     setHiddenUploadIds(prev => [...prev, id]);
@@ -726,6 +830,14 @@ export default function App() {
     }
   };
 
+  const moveWindow = (id: string, x: number, y: number) => {
+    setWindows(ws => ws.map(w => w.id === id ? { ...w, x, y } : w));
+  };
+
+  const resizeWindow = (id: string, width: number, height: number) => {
+    setWindows(ws => ws.map(w => w.id === id ? { ...w, width, height } : w));
+  };
+
   const handleSaveDocument = (name: string, content: string, type: 'markdown' | 'json') => {
     const existing = documents.find(d => d.name === name);
     if (existing) {
@@ -752,9 +864,25 @@ export default function App() {
   };
 
   const handleDeleteDocument = (id: string) => {
+    const doc = documents.find(d => d.id === id);
+    if (doc) {
+      const trashItem: TrashItem = {
+        id: doc.id,
+        name: doc.name,
+        type: doc.type,
+        timestamp: Date.now(),
+      };
+      setTrash(prev => [...prev, trashItem]);
+    }
     const updated = documents.filter(d => d.id !== id);
     setDocuments(updated);
     saveDocuments(updated);
+  };
+
+  const handleEmptyTrash = () => {
+    if (confirm('Are you sure you want to empty the Trash? This cannot be undone.')) {
+      setTrash([]);
+    }
   };
 
   const handleOpenDocument = (doc: Document) => {
@@ -801,7 +929,13 @@ export default function App() {
 
   return (
     <div className="desktop">
-      <MenuBar onOpenWallet={handleOpenWallet} isDarkMode={isDarkMode} onToggleDark={toggleDarkMode} />
+      <MenuBar 
+        onOpenWallet={handleOpenWallet} 
+        isDarkMode={isDarkMode} 
+        onToggleDark={toggleDarkMode}
+        showHidden={showHidden}
+        onToggleShowHidden={toggleShowHidden}
+      />
       
       <main className="desktop-main">
         <div className="desktop-icons">
@@ -821,6 +955,8 @@ export default function App() {
             window={window}
             onClose={() => closeWindow(window.id)}
             onFocus={() => bringToFront(window.id)}
+            onMove={(x, y) => moveWindow(window.id, x, y)}
+            onResize={(w, h) => resizeWindow(window.id, w, h)}
             isActive={activeWindow === window.id}
           >
             {window.id === 'notepad' && (
@@ -839,12 +975,11 @@ export default function App() {
                 onOpenDocument={handleOpenDocument}
                 onDeleteDocument={handleDeleteDocument}
                 onHideUpload={handleHideUpload}
-                onShowHidden={toggleShowHidden}
                 showHidden={showHidden}
                 hiddenUploads={hiddenUploads}
               />
             )}
-            {window.id === 'trash' && <TrashWindow uploads={uploads} />}
+            {window.id === 'trash' && <TrashWindow trashItems={trash} onEmptyTrash={handleEmptyTrash} />}
             {window.id === 'computer' && <ComputerWindow />}
           </Window>
         ))}
