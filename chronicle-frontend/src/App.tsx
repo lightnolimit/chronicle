@@ -149,16 +149,26 @@ function SplashScreen({ onComplete, isDarkMode }: { onComplete: () => void; isDa
   );
 }
 
-function MenuBar({ onOpenWallet, isDarkMode, onToggleDark, showHidden, onToggleShowHidden }: { 
+function MenuBar({ onOpenWallet, isDarkMode, onToggleDark, showHidden, onToggleShowHidden, chainId }: { 
   onOpenWallet: () => void; 
   isDarkMode: boolean; 
   onToggleDark: () => void;
   showHidden?: boolean;
   onToggleShowHidden?: () => void;
+  chainId?: number;
 }) {
   const [showMenu, setShowMenu] = useState<string | null>(null);
   const { address, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
+
+  const getNetworkLabel = (id?: number) => {
+    if (!id) return null;
+    if (id === 8453) return { label: 'BASE', class: 'network-mainnet' };
+    if (id === 84532) return { label: 'BASE-SEPOLIA', class: 'network-testnet' };
+    return { label: `NET-${id}`, class: 'network-unknown' };
+  };
+
+  const network = getNetworkLabel(chainId);
 
   const formatAddress = (addr: string) => {
     return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
@@ -219,11 +229,12 @@ function MenuBar({ onOpenWallet, isDarkMode, onToggleDark, showHidden, onToggleS
       { label: '────────────', disabled: true },
       { label: 'Enter Full Screen', action: () => {} },
     ]},
-    { id: 'wallet', label: isConnected ? formatAddress(address!) : 'Wallet', items: [
+    { id: 'wallet', label: (isConnected ? formatAddress(address!) : 'Wallet') + (network ? ` (${network.label})` : ''), items: [
       isConnected 
         ? { label: `Connected: ${formatAddress(address!)}`, disabled: true }
         : { label: 'Connect Wallet...', action: handleConnect },
       ...(isConnected ? [
+        ...(network ? [{ label: network.label, disabled: true }] : []),
         { label: '────────────', disabled: true },
         { label: 'Disconnect', action: handleDisconnect },
       ] : []),
@@ -672,6 +683,29 @@ function TrashWindow({
   );
 }
 
+interface NotificationProps {
+  message: string;
+  type: 'success' | 'error';
+  onClose: () => void;
+}
+
+function Notification({ message, type, onClose }: NotificationProps) {
+  useEffect(() => {
+    const timer = setTimeout(onClose, 4000);
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  return (
+    <div className={`notification ${type}`}>
+      <div className="notification-content">
+        <span className="notification-icon">{type === 'success' ? '✓' : '✕'}</span>
+        <span className="notification-message">{message}</span>
+      </div>
+      <button className="notification-close" onClick={onClose}>×</button>
+    </div>
+  );
+}
+
 function ComputerWindow() {
   return (
     <div className="computer-content">
@@ -757,6 +791,7 @@ export default function App() {
   const [documents, setDocuments] = useState<Document[]>(loadDocuments);
   const [uploads, setUploads] = useState<UploadedDoc[]>(loadUploads);
   const [currentDocument, setCurrentDocument] = useState<Document | null>(null);
+  const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   
   const [windows, setWindows] = useState<WindowState[]>([
     { id: 'computer', title: 'Computer', x: 80, y: 40, width: 320, height: 260, visible: false, zIndex: 1 },
@@ -805,7 +840,7 @@ export default function App() {
     setIsDarkMode(prev => !prev);
   };
 
-  const { address } = useAccount();
+  const { address, chainId } = useAccount();
   const { openConnectModal } = useConnectModal();
 
   const bringToFront = useCallback((id: string) => {
@@ -920,10 +955,16 @@ export default function App() {
       setUploads(updatedUploads);
       saveUploads(updatedUploads);
       
-      alert(`Document submitted to Permaweb!\n\nID: ${result.id}\nURL: ${result.url}`);
+      setNotification({
+        message: `Submitted: ${result.id}`,
+        type: 'success'
+      });
     } catch (error: any) {
       console.error('Upload error:', error);
-      alert(`Upload failed: ${error.response?.data?.message || error.message || 'Unknown error'}`);
+      setNotification({
+        message: error.response?.data?.message || error.message || 'Upload failed',
+        type: 'error'
+      });
     }
   };
 
@@ -943,7 +984,16 @@ export default function App() {
         onToggleDark={toggleDarkMode}
         showHidden={showHidden}
         onToggleShowHidden={toggleShowHidden}
+        chainId={chainId}
       />
+      
+      {notification && (
+        <Notification
+          message={notification.message}
+          type={notification.type}
+          onClose={() => setNotification(null)}
+        />
+      )}
       
       <main className="desktop-main">
         <div className="desktop-icons">
