@@ -697,16 +697,60 @@ interface UploadProgressProps {
 
 function UploadProgress({ progress, status, error, result, onClose }: UploadProgressProps) {
   const progressBars = Array.from({ length: 10 }, (_, i) => i < Math.floor(progress / 10));
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [pos, setPos] = useState({ x: 200, y: 150 });
+
+  const handleHeaderMouseDown = (e: React.MouseEvent) => {
+    if ((e.target as HTMLElement).tagName === 'BUTTON') return;
+    e.preventDefault();
+    setIsDragging(true);
+    setDragOffset({
+      x: e.clientX - pos.x,
+      y: e.clientY - pos.y,
+    });
+  };
+
+  useEffect(() => {
+    if (!isDragging) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const newX = Math.max(0, e.clientX - dragOffset.x);
+      const newY = Math.max(0, e.clientY - dragOffset.y);
+      setPos({ x: newX, y: newY });
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging, dragOffset]);
 
   return (
-    <div className="upload-progress-overlay">
-      <div className="upload-progress-window">
-        <div className="window-header">
+    <div 
+      className="upload-progress-overlay"
+      style={{ background: 'rgba(0,0,0,0.3)' }}
+    >
+      <div 
+        className="upload-progress-window"
+        style={{
+          position: 'absolute',
+          left: pos.x,
+          top: pos.y,
+        }}
+      >
+        <div className="window-header" onMouseDown={handleHeaderMouseDown}>
           <button className="close-btn" onClick={onClose} />
           <div className="window-bars">
             <hr /><hr /><hr /><hr /><hr /><hr />
           </div>
-          <span className="window-title">Submitting to Permaweb...</span>
         </div>
         <div className="window-body">
           <div className="progress-content">
@@ -733,7 +777,9 @@ function UploadProgress({ progress, status, error, result, onClose }: UploadProg
                 <div className="progress-details">
                   <div className="progress-detail-row">
                     <span className="detail-label">ID:</span>
-                    <span className="detail-value">{result.id.slice(0, 16)}...</span>
+                    <span className="detail-value" style={{ fontFamily: 'monospace', fontSize: '10px' }}>
+                      {result.id}
+                    </span>
                   </div>
                   <div className="progress-detail-row">
                     <span className="detail-label">URL:</span>
@@ -760,6 +806,7 @@ function UploadProgress({ progress, status, error, result, onClose }: UploadProg
             )}
           </div>
         </div>
+        <div className="window-resize" />
       </div>
     </div>
   );
