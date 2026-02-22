@@ -176,5 +176,5 @@ All upload responses:
 
 ## Support
 
-- GitHub: https://github.com/your-org/chronicle-agent
+- GitHub: https://github.com/your-org/chronicle
 - Discord: https://discord.gg/chronicle

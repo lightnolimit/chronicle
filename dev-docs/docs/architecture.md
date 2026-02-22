@@ -20,7 +20,7 @@
 
 ### 1. API Server (Express)
 
-Located in `chronicle-agent/src/server.ts`
+Located in `agent/src/server.ts`
 
 ```typescript
 // Endpoints
@@ -33,7 +33,7 @@ GET  /uploads/export  // Export history
 
 ### 2. Upload Service
 
-Located in `chronicle-agent/src/services/upload.ts`
+Located in `agent/src/services/upload.ts`
 
 - Handles Turbo upload API calls
 - Tags data with content type and metadata
@@ -41,7 +41,7 @@ Located in `chronicle-agent/src/services/upload.ts`
 
 ### 3. Database Service
 
-Located in `chronicle-agent/src/services/database.ts`
+Located in `agent/src/services/database.ts`
 
 - SQLite for local development
 - Tracks upload history per wallet
@@ -49,7 +49,7 @@ Located in `chronicle-agent/src/services/database.ts`
 
 ### 4. Encryption Service
 
-Located in `chronicle-agent/src/services/encryption.ts`
+Located in `agent/src/services/encryption.ts`
 
 - AES-256-GCM encryption
 - Client-side encryption recommended

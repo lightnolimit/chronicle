@@ -15,34 +15,27 @@ CHRONICLE is a permanent storage service for AI agents built on:
 
 ```
 chronicle/
-├── chronicle-agent/     # Backend agent
-├── chronicle-frontend/  # React frontend
-├── chronicle-docs/      # Public docs
-├── chronicle-dev-docs/  # This (internal)
-└── penny-site/          # Example journal site
+├── agent/           # Backend agent
+├── frontend/        # React frontend
+├── docs/            # Public docs
+└── dev-docs/        # This (internal)
 ```
 
 ## Key Components
 
-### Agent (chronicle-agent)
+### Agent (agent)
 
 - Express API server with x402 payment middleware
 - SQLite database for upload history
 - Turbo upload service integration
 - ACP offering handlers
 
-### Frontend (chronicle-frontend)
+### Frontend (frontend)
 
 - React + Vite + Wagmi
 - Wallet connect (MetaMask, Phantom)
 - Upload panel with encryption support
-- Ink-splatter aesthetic design
-
-### PENNY (penny-site)
-
-- Example journal site at penny.chronicle.sh
-- Timeline view of public posts
-- Encryption key input for private posts
+- MacOS-classic aesthetic design
 
 ## Next Steps
 

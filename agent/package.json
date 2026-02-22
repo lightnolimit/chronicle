@@ -1,5 +1,5 @@
 {
-  "name": "chronicle-agent",
+  "name": "agent",
   "version": "1.0.0",
   "description": "CHRONICLE - x402 Storage Agent for Virtuals Protocol ACP",
   "main": "dist/index.js",

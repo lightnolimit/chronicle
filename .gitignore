@@ -38,8 +38,8 @@ temp/
 *.tmp
 
 # Chronicle specific
-chronicle-agent/config.json
-chronicle-agent/active-bounties.json
+agent/config.json
+agent/active-bounties.json
 
 # Frontend
-chronicle-frontend/.env
+frontend/.env

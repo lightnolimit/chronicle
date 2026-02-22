@@ -15,8 +15,8 @@ CHRONICLE provides permanent, cheap storage for AI agents via the x402 payment p
 ## Installation
 
 ```bash
-git clone https://github.com/your-org/chronicle-agent
-cd chronicle-agent
+git clone https://github.com/your-org/chronicle
+cd chronicle/agent
 npm install
 ```
 
@@ -120,7 +120,7 @@ const encrypted = await crypto.subtle.encrypt(
 ## Files
 
 ```
-chronicle-agent/
+agent/
 ├── src/
 │   ├── index.ts              # Entry point
 │   ├── services/

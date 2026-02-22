@@ -4,10 +4,10 @@
 
 ```
 chronicle/
-├── chronicle-agent/     # Backend agent with x402 payments + SQLite
-├── chronicle-frontend/  # Landing page UI with wallet connect
-├── chronicle-docs/      # Public documentation site
-└── chronicle-dev-docs/  # Internal development documentation
+├── agent/           # Backend agent with x402 payments + SQLite
+├── frontend/        # Landing page UI with wallet connect
+├── docs/            # Public documentation site
+└── dev-docs/        # Internal development documentation
 ```
 
 ## Quick Start
@@ -15,37 +15,36 @@ chronicle/
 ### 1. Install Dependencies
 
 ```bash
-# Frontend
-cd chronicle-frontend && npm install
+# All workspaces
+npm run install:all
 
-# Agent
-cd chronicle-agent && npm install
-
-# Docs
-cd chronicle-docs && npm install
+# Or individually
+cd frontend && npm install
+cd agent && npm install
 ```
 
 ### 2. Environment Setup
 
 ```bash
 # Agent - copy .env.example to .env
-cp chronicle-agent/.env.example chronicle-agent/.env
+cp agent/.env.example agent/.env
 # Edit and add your EVM_PRIVATE_KEY and EVM_ADDRESS
 ```
 
 ### 3. Run Development
 
 ```bash
-# Terminal 1 - Frontend
-cd chronicle-frontend && npm run dev
+# Both frontend and API
+npm run dev
 
-# Terminal 2 - API Server
-cd chronicle-agent && npm run dev:api
+# Or separately
+npm run dev:frontend   # Terminal 1
+npm run dev:api        # Terminal 2
 ```
 
 ## Environment Variables
 
-### chronicle-agent/.env
+### agent/.env
 ```
 EVM_PRIVATE_KEY=0x...     # Your Base wallet private key (for Turbo uploads)
 EVM_ADDRESS=0x...         # Address to receive USDC payments
@@ -53,30 +52,35 @@ NETWORK=base              # base (mainnet) or base-sepolia (testnet)
 PORT=3001                 # API server port (optional)
 ```
 
-### chronicle-frontend/.env
+### frontend/.env
 ```
 VITE_API_URL=http://localhost:3001  # API URL (optional)
 ```
 
 ## Commands
 
+### Root Level
+```bash
+npm run dev           # Start frontend + API
+npm run dev:frontend  # Start frontend only
+npm run dev:api       # Start API only
+npm run dev:docs      # Start docs server
+npm run build         # Build all workspaces
+```
+
 ### Frontend
 ```bash
+cd frontend
 npm run dev    # Start dev server
 npm run build  # Production build
 ```
 
 ### Agent
 ```bash
+cd agent
 npm run dev        # Start agent
 npm run dev:api    # Start API server
 npm run build      # Build TypeScript
-```
-
-### Docs
-```bash
-npm run dev    # Start docs server
-npm run build  # Production build
 ```
 
 ## Tech Stack
@@ -93,25 +97,25 @@ npm run build  # Production build
 
 | File | Purpose |
 |------|---------|
-| `chronicle-agent/src/server.ts` | Express API with x402 middleware |
-| `chronicle-agent/src/services/upload.ts` | Turbo upload service |
-| `chronicle-agent/src/services/database.ts` | SQLite operations |
-| `chronicle-frontend/src/App.tsx` | Main React app with x402 client |
-| `chronicle-frontend/src/wagmi.ts` | Wagmi config for Base |
+| `agent/src/server.ts` | Express API with x402 middleware |
+| `agent/src/services/upload.ts` | Turbo upload service |
+| `agent/src/services/database.ts` | SQLite operations |
+| `frontend/src/App.tsx` | Main React app with x402 client |
+| `frontend/src/wagmi.ts` | Wagmi config for Base |
 
 ---
 
 ## Documentation
 
-- **[chronicle-dev-docs/docs/x402.md](chronicle-dev-docs/docs/x402.md)** - Complete x402/PayAI integration guide
-- **[chronicle-dev-docs/docs/pricing.md](chronicle-dev-docs/docs/pricing.md)** - Pricing model details
-- **[chronicle-dev-docs/docs/architecture.md](chronicle-dev-docs/docs/architecture.md)** - System architecture
+- **[dev-docs/docs/x402.md](dev-docs/docs/x402.md)** - Complete x402/PayAI integration guide
+- **[dev-docs/docs/pricing.md](dev-docs/docs/pricing.md)** - Pricing model details
+- **[dev-docs/docs/architecture.md](dev-docs/docs/architecture.md)** - System architecture
 
 ---
 
 ## x402 Quick Reference
 
-For detailed x402 integration, see [chronicle-dev-docs/docs/x402.md](chronicle-dev-docs/docs/x402.md).
+For detailed x402 integration, see [dev-docs/docs/x402.md](dev-docs/docs/x402.md).
 
 ### Key Points
 
