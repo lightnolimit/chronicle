@@ -637,7 +637,7 @@ function DocumentsWindow({
                     }}
                     title="Hide from view"
                   >
-                    👁
+                    ×
                   </button>
                 )}
               </div>

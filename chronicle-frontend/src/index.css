@@ -627,6 +627,26 @@ a:hover {
   color: red;
 }
 
+.docs-hide-btn {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 14px;
+  height: 14px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  font-size: 10px;
+  cursor: pointer;
+  color: var(--text-muted);
+  line-height: 1;
+  border-radius: 2px;
+}
+
+.docs-hide-btn:hover {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar {
   width: 16px;
