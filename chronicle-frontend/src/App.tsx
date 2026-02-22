@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useAccount, useDisconnect } from 'wagmi';
+import { useAccount, useDisconnect, useWalletClient } from 'wagmi';
 import { useConnectModal } from '@rainbow-me/rainbowkit';
 import axios from 'axios';
 import './index.css';
@@ -685,7 +685,7 @@ function TrashWindow({
 
 interface UploadProgressProps {
   progress: number;
-  status: 'uploading' | 'success' | 'error';
+  status: 'uploading' | 'awaiting_payment' | 'success' | 'error';
   error?: string;
   result?: {
     id: string;
@@ -767,6 +767,22 @@ function UploadProgress({ progress, status, error, result, onClose }: UploadProg
                 </div>
                 <div className="progress-label">Uploading to Arweave via Turbo...</div>
                 <div className="progress-percent">{progress}%</div>
+              </>
+            )}
+            
+            {status === 'awaiting_payment' && (
+              <>
+                <div className="progress-bars">
+                  {progressBars.map((filled, i) => (
+                    <div 
+                      key={i} 
+                      className={`progress-bar ${filled ? 'filled' : ''}`}
+                      style={{ animationDelay: `${i * 0.1}s` }}
+                    />
+                  ))}
+                </div>
+                <div className="progress-label">Awaiting payment signature...</div>
+                <div className="progress-percent">Please sign in your wallet</div>
               </>
             )}
             
@@ -862,19 +878,112 @@ async function uploadToApi(
   data: string, 
   type: string,
   name: string,
-  walletAddress: string
+  walletAddress: string,
+  walletClient: any
 ) {
   const processedData = await processImageUrls(data);
   
-  const response = await axios.post(`${API_URL}/api/upload`, {
-    data: processedData,
-    type,
-    name,
-  }, {
-    headers: {
-      'Authorization': `Bearer ${walletAddress}:sig`,
-    },
-  });
+  const makeRequest = async (paymentHeader?: string) => {
+    return axios.post(`${API_URL}/api/upload`, {
+      data: processedData,
+      type,
+      name,
+    }, {
+      headers: {
+        'Authorization': `Bearer ${walletAddress}:sig`,
+        ...(paymentHeader && { 'X-PAYMENT': paymentHeader }),
+      },
+    });
+  };
+
+  let response;
+  try {
+    response = await makeRequest();
+  } catch (error: any) {
+    console.log('[x402] Error caught:', error.message);
+    console.log('[x402] Response status:', error.response?.status);
+    console.log('[x402] Response headers:', error.response?.headers);
+    
+    if (error.response?.status === 402) {
+      // Axios returns AxiosHeaders object - use .get() method
+      const axiosHeaders = error.response.headers;
+      console.log('[x402] Raw headers object:', axiosHeaders);
+      console.log('[x402] Header keys:', Object.keys(axiosHeaders));
+      
+      // Try different ways to get the header
+      const paymentRequired = 
+        axiosHeaders.get?.('payment-required') || 
+        axiosHeaders.get?.('payment_require') ||
+        axiosHeaders['payment-required'] ||
+        axiosHeaders['payment_require'];
+      
+      console.log('[x402] Payment required header:', paymentRequired);
+      console.log('[x402] walletClient exists:', !!walletClient);
+      
+      if (!paymentRequired) {
+        console.log('[x402] No payment-required header found in 402 response');
+        throw new Error('Server returned 402 but no payment requirements found');
+      }
+      
+      if (!walletClient) {
+        console.log('[x402] No walletClient available');
+        throw new Error('Payment required. Please connect your wallet.');
+      }
+      
+      try {
+        const decoded = JSON.parse(atob(paymentRequired));
+        console.log('[x402] Decoded payment req:', decoded);
+        
+        if (decoded.accepts && decoded.accepts.length > 0) {
+          const paymentReq = decoded.accepts[0];
+          const amount = paymentReq.maxAmountRequired || paymentReq.maximumPaymentAmount || '1000';
+          const payTo = paymentReq.payTo || paymentReq.recipient;
+          const token = paymentReq.extra?.token || paymentReq.asset || '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48';
+          
+          console.log('[x402] Requesting signature for payment:', { amount, payTo, token });
+          
+          const message = `Authorize payment of ${amount} USDC to ${payTo}`;
+          const signature = await walletClient.signMessage({
+            account: walletClient.account.address,
+            message,
+          });
+          
+          console.log('[x402] Signature obtained, retrying request');
+          
+          const nonce = () => Math.random().toString(36).substring(2) + Date.now().toString(36);
+          
+          const paymentPayload = JSON.stringify({
+            x402Version: 2,
+            scheme: 'exact',
+            payload: {
+              signature,
+              authorization: {
+                from: walletAddress,
+                to: payTo,
+                value: amount,
+                token,
+                nonce: nonce(),
+              },
+            },
+          });
+          
+          const paymentHeader = btoa(paymentPayload);
+          response = await makeRequest(paymentHeader);
+        } else {
+          throw new Error('No payment requirements found');
+        }
+      } catch (payError: any) {
+        console.log('[x402] Payment error:', payError.message);
+        if (payError.message?.includes('User rejected')) {
+          throw new Error('Payment signature rejected. Please approve the transaction in your wallet and try again.');
+        }
+        throw new Error(`Payment failed: ${payError.message}`);
+      }
+    } else {
+      console.log('[x402] Non-402 error:', error.message);
+      throw error;
+    }
+  }
 
   return {
     id: response.data.id,
@@ -899,7 +1008,7 @@ export default function App() {
   const [currentDocument, setCurrentDocument] = useState<Document | null>(null);
   const [uploadProgress, setUploadProgress] = useState<{
     progress: number;
-    status: 'uploading' | 'success' | 'error';
+    status: 'uploading' | 'awaiting_payment' | 'success' | 'error';
     error?: string;
     result?: { id: string; url: string; priceUsd?: number };
   } | null>(null);
@@ -952,6 +1061,7 @@ export default function App() {
   };
 
   const { address, chainId } = useAccount();
+  const { data: walletClient } = useWalletClient();
   const { openConnectModal } = useConnectModal();
 
   const bringToFront = useCallback((id: string) => {
@@ -1045,8 +1155,24 @@ export default function App() {
   };
 
   const handleSubmit = async (content: string, type: string, name: string) => {
+    console.log('[handleSubmit] Starting upload');
+    console.log('[handleSubmit] address:', address);
+    console.log('[handleSubmit] walletClient:', walletClient ? 'exists' : 'null/undefined');
+    console.log('[handleSubmit] walletClient.account:', walletClient?.account);
+    
     if (!address) {
+      console.log('[handleSubmit] No address, opening connect modal');
       openConnectModal?.();
+      return;
+    }
+
+    if (!walletClient) {
+      console.log('[handleSubmit] No walletClient, showing error');
+      setUploadProgress({ 
+        progress: 0, 
+        status: 'error',
+        error: 'Please connect your wallet to upload'
+      });
       return;
     }
 
@@ -1061,7 +1187,10 @@ export default function App() {
     }, 200);
 
     try {
-      const result = await uploadToApi(content, type, name, address);
+      console.log('[handleSubmit] Calling uploadToApi...');
+      setUploadProgress(prev => prev ? { ...prev, status: 'awaiting_payment' } : null);
+      const result = await uploadToApi(content, type, name, address, walletClient);
+      console.log('[handleSubmit] Upload successful:', result);
       
       clearInterval(progressInterval);
       setUploadProgress({ 

@@ -13,6 +13,8 @@
     "@rainbow-me/rainbowkit": "^2.2.10",
     "@tanstack/react-query": "^5.90.21",
     "@wagmi/core": "^2.22.1",
+    "@x402/axios": "^2.4.0",
+    "@x402/evm": "^2.4.0",
     "axios": "^1.13.5",
     "framer-motion": "^12.34.3",
     "react": "^19.2.0",

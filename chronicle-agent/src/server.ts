@@ -1,15 +1,54 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
+import { paymentMiddleware, x402ResourceServer } from '@x402/express';
+import { ExactEvmScheme } from '@x402/evm/exact/server';
+import { HTTPFacilitatorClient } from '@x402/core/server';
 import { getUserUploads, getUserUploadCount, exportUploadsJson, exportUploadsCsv, recordUpload } from '../src/services/database.js';
 import { UploadService } from '../src/services/upload.js';
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  exposedHeaders: ['Payment-Required', 'Payment-Response', 'payment-required', 'payment-response'],
+}));
 app.use(express.json({ limit: '10mb' }));
 
 const AUTH_HEADER = process.env.API_AUTH_HEADER || 'authorization';
 const EVM_PRIVATE_KEY = process.env.EVM_PRIVATE_KEY;
+const EVM_ADDRESS = process.env.EVM_ADDRESS as string;
+const NETWORK = process.env.NETWORK || 'base-sepolia';
+
+const networkChainId = NETWORK === 'base' ? 'eip155:8453' : 'eip155:84532';
+const facilitatorUrl = NETWORK === 'base' 
+  ? 'https://x402.org/facilitator'
+  : 'https://x402.org/facilitator';
+
+const facilitatorClient = new HTTPFacilitatorClient({ 
+  url: facilitatorUrl,
+});
+
+const x402Server = new x402ResourceServer(facilitatorClient);
+x402Server.register(networkChainId, new ExactEvmScheme());
+
+app.use(
+  paymentMiddleware(
+    {
+      'POST /api/upload': {
+        accepts: [
+          {
+            scheme: 'exact',
+            price: '$0.01',
+            network: networkChainId,
+            payTo: EVM_ADDRESS,
+          },
+        ],
+        description: 'Upload document to Arweave via Turbo',
+        mimeType: 'application/json',
+      },
+    },
+    x402Server,
+  ),
+);
 
 function authenticate(req: express.Request): string | null {
   const auth = req.headers[AUTH_HEADER.toLowerCase()] as string;
@@ -148,6 +187,8 @@ const PORT = process.env.PORT || 3001;
 
 app.listen(PORT, () => {
   console.log(`CHRONICLE API running on port ${PORT}`);
+  console.log(`Network: ${NETWORK} (${networkChainId})`);
+  console.log(`Payment receiver: ${EVM_ADDRESS}`);
 });
 
 export default app;
