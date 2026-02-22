@@ -683,25 +683,84 @@ function TrashWindow({
   );
 }
 
-interface NotificationProps {
-  message: string;
-  type: 'success' | 'error';
+interface UploadProgressProps {
+  progress: number;
+  status: 'uploading' | 'success' | 'error';
+  error?: string;
+  result?: {
+    id: string;
+    url: string;
+    priceUsd?: number;
+  };
   onClose: () => void;
 }
 
-function Notification({ message, type, onClose }: NotificationProps) {
-  useEffect(() => {
-    const timer = setTimeout(onClose, 4000);
-    return () => clearTimeout(timer);
-  }, [onClose]);
+function UploadProgress({ progress, status, error, result, onClose }: UploadProgressProps) {
+  const progressBars = Array.from({ length: 10 }, (_, i) => i < Math.floor(progress / 10));
 
   return (
-    <div className={`notification ${type}`}>
-      <div className="notification-content">
-        <span className="notification-icon">{type === 'success' ? '✓' : '✕'}</span>
-        <span className="notification-message">{message}</span>
+    <div className="upload-progress-overlay">
+      <div className="upload-progress-window">
+        <div className="window-header">
+          <button className="close-btn" onClick={onClose} />
+          <div className="window-bars">
+            <hr /><hr /><hr /><hr /><hr /><hr />
+          </div>
+          <span className="window-title">Submitting to Permaweb...</span>
+        </div>
+        <div className="window-body">
+          <div className="progress-content">
+            {status === 'uploading' && (
+              <>
+                <div className="progress-bars">
+                  {progressBars.map((filled, i) => (
+                    <div 
+                      key={i} 
+                      className={`progress-bar ${filled ? 'filled' : ''}`}
+                      style={{ animationDelay: `${i * 0.1}s` }}
+                    />
+                  ))}
+                </div>
+                <div className="progress-label">Uploading to Arweave via Turbo...</div>
+                <div className="progress-percent">{progress}%</div>
+              </>
+            )}
+            
+            {status === 'success' && result && (
+              <>
+                <div className="progress-success-icon">✓</div>
+                <div className="progress-success-label">Submitted to Permaweb!</div>
+                <div className="progress-details">
+                  <div className="progress-detail-row">
+                    <span className="detail-label">ID:</span>
+                    <span className="detail-value">{result.id.slice(0, 16)}...</span>
+                  </div>
+                  <div className="progress-detail-row">
+                    <span className="detail-label">URL:</span>
+                    <span className="detail-value" style={{ fontSize: '10px', wordBreak: 'break-all' }}>
+                      {result.url}
+                    </span>
+                  </div>
+                  <div className="progress-detail-row">
+                    <span className="detail-label">Cost:</span>
+                    <span className="detail-value">${result.priceUsd?.toFixed(2) || '0.01'} USD</span>
+                  </div>
+                </div>
+                <button className="progress-done-btn" onClick={onClose}>Done</button>
+              </>
+            )}
+            
+            {status === 'error' && (
+              <>
+                <div className="progress-error-icon">✕</div>
+                <div className="progress-error-label">Upload Failed</div>
+                <div className="progress-error-message">{error}</div>
+                <button className="progress-done-btn" onClick={onClose}>OK</button>
+              </>
+            )}
+          </div>
+        </div>
       </div>
-      <button className="notification-close" onClick={onClose}>×</button>
     </div>
   );
 }
@@ -791,7 +850,12 @@ export default function App() {
   const [documents, setDocuments] = useState<Document[]>(loadDocuments);
   const [uploads, setUploads] = useState<UploadedDoc[]>(loadUploads);
   const [currentDocument, setCurrentDocument] = useState<Document | null>(null);
-  const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [uploadProgress, setUploadProgress] = useState<{
+    progress: number;
+    status: 'uploading' | 'success' | 'error';
+    error?: string;
+    result?: { id: string; url: string; priceUsd?: number };
+  } | null>(null);
   
   const [windows, setWindows] = useState<WindowState[]>([
     { id: 'computer', title: 'Computer', x: 80, y: 40, width: 320, height: 260, visible: false, zIndex: 1 },
@@ -935,12 +999,29 @@ export default function App() {
 
   const handleSubmit = async (content: string, type: string, name: string) => {
     if (!address) {
-      alert('Please connect your wallet first!');
+      openConnectModal?.();
       return;
     }
 
+    setUploadProgress({ progress: 0, status: 'uploading' });
+    
+    const progressInterval = setInterval(() => {
+      setUploadProgress(prev => {
+        if (!prev || prev.status !== 'uploading') return prev;
+        const newProgress = Math.min(prev.progress + Math.random() * 15, 90);
+        return { ...prev, progress: Math.floor(newProgress) };
+      });
+    }, 200);
+
     try {
       const result = await uploadToApi(content, type, name, address);
+      
+      clearInterval(progressInterval);
+      setUploadProgress({ 
+        progress: 100, 
+        status: 'success',
+        result: { id: result.id, url: result.url }
+      });
       
       const newUpload: UploadedDoc = {
         id: result.id,
@@ -954,16 +1035,13 @@ export default function App() {
       const updatedUploads = [...uploads, newUpload];
       setUploads(updatedUploads);
       saveUploads(updatedUploads);
-      
-      setNotification({
-        message: `Submitted: ${result.id}`,
-        type: 'success'
-      });
     } catch (error: any) {
+      clearInterval(progressInterval);
       console.error('Upload error:', error);
-      setNotification({
-        message: error.response?.data?.message || error.message || 'Upload failed',
-        type: 'error'
+      setUploadProgress({ 
+        progress: 0, 
+        status: 'error',
+        error: error.response?.data?.message || error.message || 'Upload failed'
       });
     }
   };
@@ -987,11 +1065,13 @@ export default function App() {
         chainId={chainId}
       />
       
-      {notification && (
-        <Notification
-          message={notification.message}
-          type={notification.type}
-          onClose={() => setNotification(null)}
+      {uploadProgress && (
+        <UploadProgress
+          progress={uploadProgress.progress}
+          status={uploadProgress.status}
+          error={uploadProgress.error}
+          result={uploadProgress.result}
+          onClose={() => setUploadProgress(null)}
         />
       )}
       
