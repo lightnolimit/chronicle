@@ -1,10 +1,31 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useAccount, useDisconnect, useWalletClient } from 'wagmi';
+import { useAccount, useDisconnect, useSignTypedData } from 'wagmi';
 import { useConnectModal } from '@rainbow-me/rainbowkit';
 import axios from 'axios';
 import './index.css';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+
+const USDC_CONTRACTS: Record<number, `0x${string}`> = {
+  8453: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+  84532: '0x036CbD53842c5426634e7929541eC2318f3dCF7e',
+};
+
+const EIP3009_DOMAIN = {
+  name: 'USD Coin',
+  version: '2',
+};
+
+const EIP3009_TYPES = {
+  TransferWithAuthorization: [
+    { name: 'from', type: 'address' },
+    { name: 'to', type: 'address' },
+    { name: 'value', type: 'uint256' },
+    { name: 'validAfter', type: 'uint256' },
+    { name: 'validBefore', type: 'uint256' },
+    { name: 'nonce', type: 'bytes32' },
+  ],
+};
 
 interface WindowState {
   id: string;
@@ -163,8 +184,8 @@ function MenuBar({ onOpenWallet, isDarkMode, onToggleDark, showHidden, onToggleS
 
   const getNetworkLabel = (id?: number) => {
     if (!id) return null;
-    if (id === 8453) return { label: 'BASE', class: 'network-mainnet' };
-    if (id === 84532) return { label: 'BASE-SEPOLIA', class: 'network-testnet' };
+    if (id === 8453) return { label: 'BASE (MAINNET)', class: 'network-mainnet' };
+    if (id === 84532) return { label: 'BASE (SEPOLIA)', class: 'network-testnet' };
     return { label: `NET-${id}`, class: 'network-unknown' };
   };
 
@@ -874,12 +895,46 @@ async function processImageUrls(content: string): Promise<string> {
   return processedContent;
 }
 
+function generateNonce(): `0x${string}` {
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  return `0x${Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('')}` as `0x${string}`;
+}
+
+function buildPaymentHeader(
+  signature: `0x${string}`,
+  authorization: {
+    from: `0x${string}`;
+    to: `0x${string}`;
+    value: string;
+    validAfter: string;
+    validBefore: string;
+    nonce: `0x${string}`;
+  },
+  accepted: any,
+  network: string
+): string {
+  const payload = {
+    x402Version: 2,
+    scheme: 'exact',
+    network,
+    accepted,
+    payload: {
+      signature,
+      authorization,
+    },
+    extensions: {},
+  };
+  return btoa(JSON.stringify(payload));
+}
+
 async function uploadToApi(
   data: string, 
   type: string,
   name: string,
   walletAddress: string,
-  walletClient: any
+  signTypedData: (args: any) => Promise<`0x${string}`>,
+  chainId?: number
 ) {
   const processedData = await processImageUrls(data);
   
@@ -891,7 +946,7 @@ async function uploadToApi(
     }, {
       headers: {
         'Authorization': `Bearer ${walletAddress}:sig`,
-        ...(paymentHeader && { 'X-PAYMENT': paymentHeader }),
+        ...(paymentHeader && { 'PAYMENT-SIGNATURE': paymentHeader }),
       },
     });
   };
@@ -900,87 +955,71 @@ async function uploadToApi(
   try {
     response = await makeRequest();
   } catch (error: any) {
-    console.log('[x402] Error caught:', error.message);
-    console.log('[x402] Response status:', error.response?.status);
-    console.log('[x402] Response headers:', error.response?.headers);
-    
     if (error.response?.status === 402) {
-      // Axios returns AxiosHeaders object - use .get() method
-      const axiosHeaders = error.response.headers;
-      console.log('[x402] Raw headers object:', axiosHeaders);
-      console.log('[x402] Header keys:', Object.keys(axiosHeaders));
-      
-      // Try different ways to get the header
-      const paymentRequired = 
-        axiosHeaders.get?.('payment-required') || 
-        axiosHeaders.get?.('payment_require') ||
-        axiosHeaders['payment-required'] ||
-        axiosHeaders['payment_require'];
-      
-      console.log('[x402] Payment required header:', paymentRequired);
-      console.log('[x402] walletClient exists:', !!walletClient);
+      const paymentRequired = error.response.headers['payment-required'];
       
       if (!paymentRequired) {
-        console.log('[x402] No payment-required header found in 402 response');
         throw new Error('Server returned 402 but no payment requirements found');
-      }
-      
-      if (!walletClient) {
-        console.log('[x402] No walletClient available');
-        throw new Error('Payment required. Please connect your wallet.');
       }
       
       try {
         const decoded = JSON.parse(atob(paymentRequired));
-        console.log('[x402] Decoded payment req:', decoded);
         
         if (decoded.accepts && decoded.accepts.length > 0) {
-          const paymentReq = decoded.accepts[0];
-          const amount = paymentReq.maxAmountRequired || paymentReq.maximumPaymentAmount || '1000';
-          const payTo = paymentReq.payTo || paymentReq.recipient;
-          const token = paymentReq.extra?.token || paymentReq.asset || '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48';
+          const accepted = decoded.accepts[0];
+          const amount = accepted.amount;
+          const payTo = accepted.payTo;
+          const network = accepted.network;
+          const usdcAddress = USDC_CONTRACTS[chainId || 8453] || accepted.asset;
           
-          console.log('[x402] Requesting signature for payment:', { amount, payTo, token });
+          const now = Math.floor(Date.now() / 1000);
+          const validAfter = now.toString();
+          const validBefore = (now + 300).toString();
+          const nonce = generateNonce();
           
-          const message = `Authorize payment of ${amount} USDC to ${payTo}`;
-          const signature = await walletClient.signMessage({
-            account: walletClient.account.address,
+          const domain = {
+            ...EIP3009_DOMAIN,
+            chainId: chainId || 8453,
+            verifyingContract: usdcAddress,
+          };
+          
+          const message = {
+            from: walletAddress as `0x${string}`,
+            to: payTo as `0x${string}`,
+            value: amount,
+            validAfter,
+            validBefore,
+            nonce,
+          };
+          
+          const signature = await signTypedData({
+            domain,
+            types: EIP3009_TYPES,
+            primaryType: 'TransferWithAuthorization',
             message,
           });
           
-          console.log('[x402] Signature obtained, retrying request');
+          const authorization = {
+            from: walletAddress as `0x${string}`,
+            to: payTo as `0x${string}`,
+            value: amount,
+            validAfter,
+            validBefore,
+            nonce,
+          };
           
-          const nonce = () => Math.random().toString(36).substring(2) + Date.now().toString(36);
-          
-          const paymentPayload = JSON.stringify({
-            x402Version: 2,
-            scheme: 'exact',
-            payload: {
-              signature,
-              authorization: {
-                from: walletAddress,
-                to: payTo,
-                value: amount,
-                token,
-                nonce: nonce(),
-              },
-            },
-          });
-          
-          const paymentHeader = btoa(paymentPayload);
+          const paymentHeader = buildPaymentHeader(signature, authorization, accepted, network);
           response = await makeRequest(paymentHeader);
         } else {
           throw new Error('No payment requirements found');
         }
       } catch (payError: any) {
-        console.log('[x402] Payment error:', payError.message);
-        if (payError.message?.includes('User rejected')) {
+        if (payError.message?.includes('User rejected') || payError.code === 4001) {
           throw new Error('Payment signature rejected. Please approve the transaction in your wallet and try again.');
         }
         throw new Error(`Payment failed: ${payError.message}`);
       }
     } else {
-      console.log('[x402] Non-402 error:', error.message);
       throw error;
     }
   }
@@ -1061,7 +1100,7 @@ export default function App() {
   };
 
   const { address, chainId } = useAccount();
-  const { data: walletClient } = useWalletClient();
+  const { signTypedDataAsync } = useSignTypedData();
   const { openConnectModal } = useConnectModal();
 
   const bringToFront = useCallback((id: string) => {
@@ -1155,24 +1194,8 @@ export default function App() {
   };
 
   const handleSubmit = async (content: string, type: string, name: string) => {
-    console.log('[handleSubmit] Starting upload');
-    console.log('[handleSubmit] address:', address);
-    console.log('[handleSubmit] walletClient:', walletClient ? 'exists' : 'null/undefined');
-    console.log('[handleSubmit] walletClient.account:', walletClient?.account);
-    
     if (!address) {
-      console.log('[handleSubmit] No address, opening connect modal');
       openConnectModal?.();
-      return;
-    }
-
-    if (!walletClient) {
-      console.log('[handleSubmit] No walletClient, showing error');
-      setUploadProgress({ 
-        progress: 0, 
-        status: 'error',
-        error: 'Please connect your wallet to upload'
-      });
       return;
     }
 
@@ -1180,17 +1203,15 @@ export default function App() {
     
     const progressInterval = setInterval(() => {
       setUploadProgress(prev => {
-        if (!prev || prev.status !== 'uploading') return prev;
+        if (!prev || (prev.status !== 'uploading' && prev.status !== 'awaiting_payment')) return prev;
         const newProgress = Math.min(prev.progress + Math.random() * 15, 90);
         return { ...prev, progress: Math.floor(newProgress) };
       });
     }, 200);
 
     try {
-      console.log('[handleSubmit] Calling uploadToApi...');
       setUploadProgress(prev => prev ? { ...prev, status: 'awaiting_payment' } : null);
-      const result = await uploadToApi(content, type, name, address, walletClient);
-      console.log('[handleSubmit] Upload successful:', result);
+      const result = await uploadToApi(content, type, name, address, signTypedDataAsync, chainId);
       
       clearInterval(progressInterval);
       setUploadProgress({ 

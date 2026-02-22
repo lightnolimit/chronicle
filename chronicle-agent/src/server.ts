@@ -3,13 +3,14 @@ import express from 'express';
 import cors from 'cors';
 import { paymentMiddleware, x402ResourceServer } from '@x402/express';
 import { ExactEvmScheme } from '@x402/evm/exact/server';
+import { facilitator } from '@payai/facilitator';
 import { HTTPFacilitatorClient } from '@x402/core/server';
 import { getUserUploads, getUserUploadCount, exportUploadsJson, exportUploadsCsv, recordUpload } from '../src/services/database.js';
 import { UploadService } from '../src/services/upload.js';
 
 const app = express();
 app.use(cors({
-  exposedHeaders: ['Payment-Required', 'Payment-Response', 'payment-required', 'payment-response'],
+  exposedHeaders: ['payment-required', 'payment-response', 'PAYMENT-SIGNATURE'],
 }));
 app.use(express.json({ limit: '10mb' }));
 
@@ -19,14 +20,8 @@ const EVM_ADDRESS = process.env.EVM_ADDRESS as string;
 const NETWORK = process.env.NETWORK || 'base-sepolia';
 
 const networkChainId = NETWORK === 'base' ? 'eip155:8453' : 'eip155:84532';
-const facilitatorUrl = NETWORK === 'base' 
-  ? 'https://x402.org/facilitator'
-  : 'https://x402.org/facilitator';
 
-const facilitatorClient = new HTTPFacilitatorClient({ 
-  url: facilitatorUrl,
-});
-
+const facilitatorClient = new HTTPFacilitatorClient(facilitator);
 const x402Server = new x402ResourceServer(facilitatorClient);
 x402Server.register(networkChainId, new ExactEvmScheme());
 
