@@ -578,18 +578,11 @@ function DocumentsWindow({
   documents: Document[];
   uploads: UploadedDoc[];
   onOpenDocument: (doc: Document) => void;
-  onDeleteDocument: (id: string) => void;
+  onDeleteDocument: (id: string, name: string) => void;
   onHideUpload?: (id: string) => void;
   showHidden?: boolean;
   hiddenUploads?: UploadedDoc[];
-  onLoadDocument?: (doc: Document) => void;
 }) {
-  const handleDelete = (docId: string, docName: string) => {
-    if (confirm(`Are you sure you want to delete "${docName}"? This cannot be undone.`)) {
-      onDeleteDocument(docId);
-    }
-  };
-
   const visibleUploads = uploads.filter(u => !hiddenUploads?.some(h => h.id === u.id));
 
   return (
@@ -607,7 +600,7 @@ function DocumentsWindow({
                 <div className="docs-item-type">{doc.type}</div>
                 <button 
                   className="docs-delete-btn"
-                  onClick={() => handleDelete(doc.id, doc.name)}
+                  onClick={() => onDeleteDocument(doc.id, doc.name)}
                 >
                   ×
                 </button>
@@ -700,6 +693,77 @@ function TrashWindow({
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+interface ConfirmDialogProps {
+  message: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+}
+
+function ConfirmDialog({ message, onConfirm, onCancel }: ConfirmDialogProps) {
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [pos, setPos] = useState({ x: 280, y: 200 });
+
+  const handleHeaderMouseDown = (e: React.MouseEvent) => {
+    if ((e.target as HTMLElement).tagName === 'BUTTON') return;
+    e.preventDefault();
+    setIsDragging(true);
+    setDragOffset({
+      x: e.clientX - pos.x,
+      y: e.clientY - pos.y,
+    });
+  };
+
+  useEffect(() => {
+    if (!isDragging) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const newX = Math.max(0, e.clientX - dragOffset.x);
+      const newY = Math.max(0, e.clientY - dragOffset.y);
+      setPos({ x: newX, y: newY });
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging, dragOffset]);
+
+  return (
+    <div className="confirm-dialog-overlay">
+      <div 
+        className="confirm-dialog-window"
+        style={{
+          position: 'absolute',
+          left: pos.x,
+          top: pos.y,
+        }}
+      >
+        <div className="window-header" onMouseDown={handleHeaderMouseDown}>
+          <div className="window-bars">
+            <hr /><hr /><hr /><hr /><hr /><hr />
+          </div>
+        </div>
+        <div className="confirm-dialog-body">
+          <div className="confirm-dialog-icon">⚠</div>
+          <div className="confirm-dialog-message">{message}</div>
+          <div className="confirm-dialog-buttons">
+            <button className="confirm-btn cancel" onClick={onCancel}>Cancel</button>
+            <button className="confirm-btn confirm" onClick={onConfirm}>OK</button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -1067,6 +1131,10 @@ export default function App() {
   const [hiddenUploadIds, setHiddenUploadIds] = useState<string[]>(loadHiddenUploads);
   const [showHidden, setShowHidden] = useState(false);
   const [trash, setTrash] = useState<TrashItem[]>(loadTrash);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    message: string;
+    onConfirm: () => void;
+  } | null>(null);
 
   useEffect(() => {
     saveHiddenUploads(hiddenUploadIds);
@@ -1166,26 +1234,36 @@ export default function App() {
     }
   };
 
-  const handleDeleteDocument = (id: string) => {
-    const doc = documents.find(d => d.id === id);
-    if (doc) {
-      const trashItem: TrashItem = {
-        id: doc.id,
-        name: doc.name,
-        type: doc.type,
-        timestamp: Date.now(),
-      };
-      setTrash(prev => [...prev, trashItem]);
-    }
-    const updated = documents.filter(d => d.id !== id);
-    setDocuments(updated);
-    saveDocuments(updated);
+  const handleDeleteDocument = (id: string, name: string) => {
+    setConfirmDialog({
+      message: `Are you sure you want to delete "${name}"? This cannot be undone.`,
+      onConfirm: () => {
+        const doc = documents.find(d => d.id === id);
+        if (doc) {
+          const trashItem: TrashItem = {
+            id: doc.id,
+            name: doc.name,
+            type: doc.type,
+            timestamp: Date.now(),
+          };
+          setTrash(prev => [...prev, trashItem]);
+        }
+        const updated = documents.filter(d => d.id !== id);
+        setDocuments(updated);
+        saveDocuments(updated);
+        setConfirmDialog(null);
+      },
+    });
   };
 
   const handleEmptyTrash = () => {
-    if (confirm('Are you sure you want to empty the Trash? This cannot be undone.')) {
-      setTrash([]);
-    }
+    setConfirmDialog({
+      message: 'Are you sure you want to empty the Trash? This cannot be undone.',
+      onConfirm: () => {
+        setTrash([]);
+        setConfirmDialog(null);
+      },
+    });
   };
 
   const handleOpenDocument = (doc: Document) => {
@@ -1269,6 +1347,14 @@ export default function App() {
           error={uploadProgress.error}
           result={uploadProgress.result}
           onClose={() => setUploadProgress(null)}
+        />
+      )}
+      
+      {confirmDialog && (
+        <ConfirmDialog
+          message={confirmDialog.message}
+          onConfirm={confirmDialog.onConfirm}
+          onCancel={() => setConfirmDialog(null)}
         />
       )}
       

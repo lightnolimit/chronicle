@@ -937,3 +937,101 @@ a:hover {
   max-width: 280px;
   user-select: text;
 }
+
+/* Confirm Dialog */
+.confirm-dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.confirm-dialog-window {
+  background: var(--bg-secondary);
+  border: 2px solid var(--border-color);
+  border-radius: 0;
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.2);
+  min-width: 300px;
+  max-width: 400px;
+}
+
+.confirm-dialog-window .window-header {
+  padding: 4px 8px;
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--stripe-color),
+    var(--stripe-color) 2px,
+    var(--bg-secondary) 2px,
+    var(--bg-secondary) 4px
+  );
+  cursor: move;
+}
+
+.confirm-dialog-window .window-bars {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+}
+
+.confirm-dialog-window .window-bars hr {
+  border: none;
+  border-top: 1px solid var(--border-color);
+  margin: 4px 0;
+  width: 20px;
+}
+
+.confirm-dialog-body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.confirm-dialog-icon {
+  font-size: 32px;
+  color: var(--text-secondary);
+}
+
+.confirm-dialog-message {
+  font-family: 'ChicagoFLF', sans-serif;
+  font-size: 12px;
+  color: var(--text-primary);
+  text-align: center;
+  line-height: 1.4;
+}
+
+.confirm-dialog-buttons {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.confirm-btn {
+  font-family: 'ChicagoFLF', sans-serif;
+  font-size: 12px;
+  padding: 6px 24px;
+  border: 2px solid var(--border-color);
+  cursor: pointer;
+  min-width: 70px;
+}
+
+.confirm-btn.cancel {
+  background: linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+  color: var(--text-primary);
+}
+
+.confirm-btn.confirm {
+  background: linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+  color: var(--text-primary);
+}
+
+.confirm-btn:hover {
+  background: linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg-elevated) 100%);
+}
