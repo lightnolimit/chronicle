@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import { getUserUploads, getUserUploadCount, exportUploadsJson, exportUploadsCsv, recordUpload } from '../src/services/database.js';
