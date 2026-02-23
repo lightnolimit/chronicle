@@ -41,7 +41,7 @@ interface WindowState {
 interface DesktopIcon {
   id: string;
   label: string;
-  icon: 'computer' | 'notepad' | 'trash' | 'documents';
+  icon: 'computer' | 'notepad' | 'trash' | 'documents' | 'paint';
   windowId: string;
 }
 
@@ -67,6 +67,7 @@ const ICONS: DesktopIcon[] = [
   { id: 'computer', label: 'Computer', icon: 'computer', windowId: 'computer' },
   { id: 'documents', label: 'Documents', icon: 'documents', windowId: 'documents' },
   { id: 'notepad', label: 'Notepad', icon: 'notepad', windowId: 'notepad' },
+  { id: 'paint', label: 'Paint', icon: 'paint', windowId: 'paint' },
   { id: 'trash', label: 'Trash', icon: 'trash', windowId: 'trash' },
 ];
 
@@ -141,7 +142,7 @@ function SplashScreen({ onComplete, isDarkMode }: { onComplete: () => void; isDa
 
   useEffect(() => {
     if (showWelcome) {
-      const timer = setTimeout(onComplete, 2000);
+      const timer = setTimeout(onComplete, 2500);
       return () => clearTimeout(timer);
     }
   }, [showWelcome, onComplete]);
@@ -161,11 +162,80 @@ function SplashScreen({ onComplete, isDarkMode }: { onComplete: () => void; isDa
       ) : (
         <div className="welcome">
           <div className="welcome_screen">
-            <div className={`welcome_illustration ${isDarkMode ? 'dark-mode' : ''}`} />
-            <span>Welcome to Chronicle</span>
+            <img src="/chronicle-pfp.png" alt="chronicle" className="welcome-character" />
+            <span className="welcome-title">chronicle</span>
+            <span className="welcome-tagline">Permanent memory for AI agents and humans</span>
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function CharacterPopup({ isDarkMode }: { isDarkMode: boolean }) {
+  const [visible, setVisible] = useState(true);
+  const [isDragging, setIsDragging] = useState(false);
+  const [pos, setPos] = useState({ x: window.innerWidth - 200, y: window.innerHeight - 200 });
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsDragging(true);
+    setDragOffset({
+      x: e.clientX - pos.x,
+      y: e.clientY - pos.y,
+    });
+  };
+
+  useEffect(() => {
+    if (!isDragging) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const newX = Math.max(0, Math.min(e.clientX - dragOffset.x, window.innerWidth - 200));
+      const newY = Math.max(0, Math.min(e.clientY - dragOffset.y, window.innerHeight - 200));
+      setPos({ x: newX, y: newY });
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging, dragOffset]);
+
+  if (!visible) return null;
+
+  return (
+    <div 
+      className="character-popup"
+      style={{
+        left: pos.x,
+        top: pos.y,
+      }}
+    >
+      <div 
+        className="character-popup-header"
+        onMouseDown={handleMouseDown}
+      >
+        <span>chronicle</span>
+        <button className="character-popup-close" onClick={() => setVisible(false)}>×</button>
+      </div>
+      <div className="character-popup-body">
+        <img 
+          src="/chronicle-pfp.png" 
+          alt="chronicle" 
+          className="character-popup-image"
+        />
+        <div className="character-popup-text">
+          <div className="character-name">chronicle</div>
+          <div className="character-status">Your AI memory companion</div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -218,11 +288,11 @@ function MenuBar({ onOpenWallet, isDarkMode, onToggleDark, showHidden, onToggleS
   const menus = [
     { 
       id: 'apple', 
-      label: '🍎', 
+      label: <img src="/chronicle-pfp.png" alt="chronicle" className="menu-logo" />, 
       items: [
-        { label: 'About the Finder...', action: () => {} },
+        { label: 'About chronicle...', action: () => {} },
         { label: '────────────', disabled: true },
-        { label: 'System 7', disabled: true },
+        { label: 'Version 1.0.0', disabled: true },
       ]
     },
     { id: 'file', label: 'File', items: [
@@ -331,6 +401,14 @@ function DesktopIcon({ icon, label, onDoubleClick }: { icon: string; label: stri
         <path d="M12 9.8L12.9 10.7C13.28 11 13.5 11.6 13.5 12.1V39C13.5 39.7 13.16 40.4 12.59 40.7L12 41.1" stroke="black"/>
         <path d="M18 9.8L18.9 10.7C19.28 11 19.5 11.6 19.5 12.1V39C19.5 39.7 19.16 40.4 18.59 40.7L18 41.1" stroke="black"/>
         <path d="M24 9.8L24.9 10.7C25.28 11 25.5 11.6 25.5 12.1V39C25.5 39.7 25.16 40.4 24.59 40.7L24 41.1" stroke="black"/>
+      </svg>
+    ),
+    paint: (
+      <svg viewBox="0 0 47 50" fill="none">
+        <path d="M22.45 1L1.5 23.26L23.85 47L44.8 24.74L22.45 1Z" fill="white" stroke="black" strokeWidth="1.3"/>
+        <path d="M34.33 22.77L41.31 30.19V39.1H38.52V37.61H28.04L26.64 36.13H25.25L21.06 31.68V30.19L22.45 28.71V27.23L26.64 22.77H34.33Z" fill="white" stroke="black"/>
+        <rect x="41.31" y="29.45" width="4.19" height="11.87" fill="black"/>
+        <rect x="25.25" y="29.45" width="4.19" height="1.48" fill="black"/>
       </svg>
     ),
   };
@@ -464,12 +542,10 @@ function DocumentEditor({
 }) {
   const [content, setContent] = useState(currentDoc?.content || '');
   const [docName, setDocName] = useState(currentDoc?.name || 'Untitled');
-  const [docType, setDocType] = useState<'markdown' | 'json' | 'image'>(currentDoc?.type || 'markdown');
+  const [docType, setDocType] = useState<'markdown' | 'json'>(currentDoc?.type || 'markdown');
   const [uploading, setUploading] = useState(false);
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
   const [price, setPrice] = useState<number | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (currentDoc) {
@@ -493,43 +569,9 @@ function DocumentEditor({
     return () => clearTimeout(timeoutId);
   }, [content]);
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const dataUrl = event.target?.result as string;
-      setContent(dataUrl);
-      setImagePreview(dataUrl);
-      setDocName(file.name.replace(/\.[^/.]+$/, ''));
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    const file = e.dataTransfer.files[0];
-    if (!file || !file.type.startsWith('image/')) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const dataUrl = event.target?.result as string;
-      setContent(dataUrl);
-      setImagePreview(dataUrl);
-      setDocName(file.name.replace(/\.[^/.]+$/, ''));
-    };
-    reader.readAsDataURL(file);
-  };
-
   const handleSave = () => {
     if (!docName.trim()) {
       setSaveStatus('Please enter a document name');
-      return;
-    }
-    if (docType === 'image') {
-      setSaveStatus('Images cannot be saved locally. Upload to Permaweb instead.');
-      setTimeout(() => setSaveStatus(null), 3000);
       return;
     }
     onSave(docName, content, docType);
@@ -546,22 +588,10 @@ function DocumentEditor({
     setUploading(true);
     try {
       await onSubmit(content, docType, docName);
-      if (docType === 'image') {
-        setContent('');
-        setImagePreview(null);
-        setDocName('Untitled');
-      }
     } catch (error) {
       console.error('Upload failed:', error);
     }
     setUploading(false);
-  };
-
-  const handleTypeChange = (newType: 'markdown' | 'json' | 'image') => {
-    setDocType(newType);
-    if (newType !== 'image') {
-      setImagePreview(null);
-    }
   };
 
   return (
@@ -577,57 +607,23 @@ function DocumentEditor({
         <span className="toolbar-sep" />
         <select 
           value={docType} 
-          onChange={(e) => handleTypeChange(e.target.value as 'markdown' | 'json' | 'image')}
+          onChange={(e) => setDocType(e.target.value as 'markdown' | 'json')}
           className="doc-type-select"
         >
           <option value="markdown">Markdown</option>
           <option value="json">JSON</option>
-          <option value="image">Image</option>
         </select>
         <span className="toolbar-sep" />
         <button className="toolbar-btn" onClick={handleSave}>
           {saveStatus || 'Save'}
         </button>
-        {docType === 'image' && (
-          <>
-            <span className="toolbar-sep" />
-            <button className="toolbar-btn" onClick={() => fileInputRef.current?.click()}>
-              Choose File
-            </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleFileSelect}
-              style={{ display: 'none' }}
-            />
-          </>
-        )}
       </div>
-      {docType === 'image' ? (
-        <div 
-          className="image-drop-zone"
-          onDrop={handleDrop}
-          onDragOver={(e) => e.preventDefault()}
-          onClick={() => fileInputRef.current?.click()}
-        >
-          {imagePreview ? (
-            <img src={imagePreview} alt="Preview" className="image-preview" />
-          ) : (
-            <div className="image-drop-placeholder">
-              <div className="drop-icon">📁</div>
-              <div>Drop image here or click to select</div>
-            </div>
-          )}
-        </div>
-      ) : (
-        <textarea
-          className="editor-textarea"
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          placeholder={docType === 'markdown' ? '# Start writing...\n\nYour thoughts here...' : '{\n  "key": "value"\n}'}
-        />
-      )}
+      <textarea
+        className="editor-textarea"
+        value={content}
+        onChange={(e) => setContent(e.target.value)}
+        placeholder={docType === 'markdown' ? '# Start writing...\n\nYour thoughts here...' : '{\n  "key": "value"\n}'}
+      />
       <div className="editor-footer">
         <span className="price-display">
           ${price !== null ? price.toFixed(2) : '0.01'} USD
@@ -995,10 +991,322 @@ function ComputerWindow() {
   return (
     <div className="computer-content">
       <div className="computer-info">
-        <div className="mac-icon">🍎</div>
-        <div className="computer-title">Macintosh</div>
-        <div className="computer-subtitle">System 7</div>
-        <div className="computer-version">Version 7.1</div>
+        <img src="/logo.svg" alt="Chronicle" className="computer-logo" />
+        <div className="computer-title">Chronicle</div>
+        <div className="computer-subtitle">Permanent Storage</div>
+        <div className="computer-version">Version 1.0.0</div>
+      </div>
+    </div>
+  );
+}
+
+function PaintWindow({ 
+  onSubmit, 
+  onOpenWallet, 
+  isWalletConnected,
+  isDarkMode,
+}: { 
+  onSubmit: (content: string, type: string, name: string) => Promise<void>;
+  onOpenWallet?: () => void;
+  isWalletConnected?: boolean;
+  isDarkMode: boolean;
+}) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [lastX, setLastX] = useState(0);
+  const [lastY, setLastY] = useState(0);
+  const [drawMode, setDrawMode] = useState<'pen' | 'eraser' | 'line' | 'spray'>('pen');
+  const [strokeWidth, setStrokeWidth] = useState(2);
+  const [imageName, setImageName] = useState('untitled');
+  const [uploading, setUploading] = useState(false);
+  const [price, setPrice] = useState<number | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const lineStartRef = useRef<{ x: number; y: number } | null>(null);
+  const snapshotRef = useRef<ImageData | null>(null);
+
+  const calculatePrice = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const dataUrl = canvas.toDataURL('image/png');
+    const sizeBytes = new TextEncoder().encode(dataUrl).length;
+    if (sizeBytes === 0) {
+      setPrice(0);
+      return;
+    }
+    const calculatedPrice = calculatePriceLocal(sizeBytes);
+    setPrice(calculatedPrice);
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(calculatePrice, 100);
+    return () => clearTimeout(timer);
+  }, [calculatePrice]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
+    ctx.fillStyle = isDarkMode ? '#2a2a2a' : '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+  }, [isDarkMode]);
+
+  const getCoords = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return { x: 0, y: 0 };
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    };
+  };
+
+  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const { x, y } = getCoords(e);
+    setIsDrawing(true);
+    setLastX(x);
+    setLastY(y);
+
+    if (drawMode === 'line') {
+      lineStartRef.current = { x, y };
+      snapshotRef.current = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    }
+  };
+
+  const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!isDrawing) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const { x, y } = getCoords(e);
+
+    ctx.strokeStyle = drawMode === 'eraser' 
+      ? (isDarkMode ? '#2a2a2a' : '#ffffff') 
+      : (isDarkMode ? '#e0e0e0' : '#000000');
+    ctx.lineWidth = strokeWidth;
+
+    if (drawMode === 'line' && lineStartRef.current && snapshotRef.current) {
+      ctx.putImageData(snapshotRef.current, 0, 0);
+      ctx.beginPath();
+      ctx.moveTo(lineStartRef.current.x, lineStartRef.current.y);
+      ctx.lineTo(x, y);
+      ctx.stroke();
+    } else if (drawMode === 'spray') {
+      for (let i = 0; i < 20; i++) {
+        const offsetX = (Math.random() - 0.5) * strokeWidth * 3;
+        const offsetY = (Math.random() - 0.5) * strokeWidth * 3;
+        ctx.fillStyle = isDarkMode ? '#e0e0e0' : '#000000';
+        ctx.fillRect(x + offsetX, y + offsetY, 1, 1);
+      }
+    } else {
+      ctx.beginPath();
+      ctx.moveTo(lastX, lastY);
+      ctx.lineTo(x, y);
+      ctx.stroke();
+      setLastX(x);
+      setLastY(y);
+    }
+  };
+
+  const stopDrawing = () => {
+    setIsDrawing(false);
+    lineStartRef.current = null;
+    snapshotRef.current = null;
+  };
+
+  const clearCanvas = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.fillStyle = isDarkMode ? '#2a2a2a' : '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const img = new Image();
+    img.onload = () => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      
+      ctx.fillStyle = isDarkMode ? '#2a2a2a' : '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      const scale = Math.min(canvas.width / img.width, canvas.height / img.height);
+      const w = img.width * scale;
+      const h = img.height * scale;
+      const x = (canvas.width - w) / 2;
+      const y = (canvas.height - h) / 2;
+      ctx.drawImage(img, x, y, w, h);
+      setImageName(file.name.replace(/\.[^/.]+$/, ''));
+    };
+    img.src = URL.createObjectURL(file);
+  };
+
+  const handleSubmit = async () => {
+    if (!isWalletConnected) {
+      onOpenWallet?.();
+      return;
+    }
+    
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    setUploading(true);
+    try {
+      const dataUrl = canvas.toDataURL('image/png');
+      await onSubmit(dataUrl, 'image', imageName);
+    } catch (error) {
+      console.error('Upload failed:', error);
+    }
+    setUploading(false);
+  };
+
+  return (
+    <div className="paint-container">
+      <div className="paint-toolbar">
+        <button 
+          className={`paint-tool-btn ${drawMode === 'pen' ? 'active' : ''}`}
+          onClick={() => setDrawMode('pen')}
+          title="Pen"
+        >
+          <svg height="18" viewBox="0 0 35 31" fill="none">
+            <path d="M13 6.47L23.2 6.84L29.47 13.17L27.49 15.13L26.44 14.07L19 21.44L16.96 21.37L15.97 22.35L9.86 22.13L8.81 21.08L8.76 19.04L7.72 17.98L7.57 11.87L13 6.47Z" fill="white" stroke="currentColor"/>
+            <rect x="22.69" y="6.31" width="4.19" height="11.87" transform="rotate(-44.7 22.69 6.31)" fill="currentColor"/>
+          </svg>
+        </button>
+        <button 
+          className={`paint-tool-btn ${drawMode === 'eraser' ? 'active' : ''}`}
+          onClick={() => setDrawMode('eraser')}
+          title="Eraser"
+        >
+          <svg height="18" viewBox="0 0 47 34" fill="none">
+            <rect x="1.5" y="22.5" width="23" height="11" stroke="currentColor" fill="white"/>
+            <line x1="24.4" y1="22.4" x2="45.96" y2="0.83" stroke="currentColor"/>
+            <line x1="22.7" y1="0.8" x2="46.2" y2="0.8" stroke="currentColor"/>
+            <line x1="24.65" y1="33.65" x2="46" y2="12.29" stroke="currentColor"/>
+            <line x1="1.35" y1="22.43" x2="23.13" y2="0.65" stroke="currentColor"/>
+          </svg>
+        </button>
+        <button 
+          className={`paint-tool-btn ${drawMode === 'line' ? 'active' : ''}`}
+          onClick={() => setDrawMode('line')}
+          title="Line"
+        >
+          <hr style={{ width: '14px', transform: 'rotate(-45deg)', border: '1px solid currentColor' }} />
+        </button>
+        <button 
+          className={`paint-tool-btn ${drawMode === 'spray' ? 'active' : ''}`}
+          onClick={() => setDrawMode('spray')}
+          title="Spray"
+        >
+          <svg width="16" viewBox="0 0 14 11" fill="currentColor">
+            <rect x="2" y="0.89" width="1.32" height="1.32"/>
+            <rect x="2" y="3.52" width="1.32" height="1.32"/>
+            <rect x="4.64" y="2.2" width="1.32" height="1.32"/>
+            <rect x="7.27" y="3.52" width="1.32" height="1.32"/>
+            <rect x="9.91" y="2.2" width="1.32" height="1.32"/>
+            <rect x="2" y="6.16" width="1.32" height="1.32"/>
+            <rect x="4.64" y="4.84" width="1.32" height="1.32"/>
+            <rect x="7.27" y="6.16" width="1.32" height="1.32"/>
+            <rect x="9.91" y="4.84" width="1.32" height="1.32"/>
+            <rect x="2" y="8.8" width="1.32" height="1.32"/>
+            <rect x="4.64" y="7.48" width="1.32" height="1.32"/>
+            <rect x="7.27" y="8.8" width="1.32" height="1.32"/>
+            <rect x="9.91" y="7.48" width="1.32" height="1.32"/>
+          </svg>
+        </button>
+        <span className="paint-toolbar-sep" />
+        <button className="paint-tool-btn" onClick={clearCanvas} title="Clear">
+          Clear
+        </button>
+        <span className="paint-toolbar-sep" />
+        <button className="paint-tool-btn" onClick={() => fileInputRef.current?.click()}>
+          Open...
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleFileSelect}
+          style={{ display: 'none' }}
+        />
+      </div>
+      
+      <div className="paint-sidebar">
+        <div className="paint-stroke-label">Size:</div>
+        <button 
+          className={`paint-stroke-btn ${strokeWidth === 1 ? 'active' : ''}`}
+          onClick={() => setStrokeWidth(1)}
+        >
+          <hr style={{ borderTop: '2px solid currentColor' }} />
+        </button>
+        <button 
+          className={`paint-stroke-btn ${strokeWidth === 2 ? 'active' : ''}`}
+          onClick={() => setStrokeWidth(2)}
+        >
+          <hr style={{ borderTop: '3px solid currentColor' }} />
+        </button>
+        <button 
+          className={`paint-stroke-btn ${strokeWidth === 4 ? 'active' : ''}`}
+          onClick={() => setStrokeWidth(4)}
+        >
+          <hr style={{ borderTop: '5px solid currentColor' }} />
+        </button>
+        <button 
+          className={`paint-stroke-btn ${strokeWidth === 8 ? 'active' : ''}`}
+          onClick={() => setStrokeWidth(8)}
+        >
+          <hr style={{ borderTop: '8px solid currentColor' }} />
+        </button>
+      </div>
+      
+      <div className="paint-canvas-container">
+        <canvas
+          ref={canvasRef}
+          width={400}
+          height={300}
+          className="paint-canvas"
+          onMouseDown={startDrawing}
+          onMouseMove={draw}
+          onMouseUp={stopDrawing}
+          onMouseLeave={stopDrawing}
+        />
+      </div>
+      
+      <div className="paint-footer">
+        <input
+          type="text"
+          className="paint-name-input"
+          value={imageName}
+          onChange={(e) => setImageName(e.target.value)}
+          placeholder="Image name"
+        />
+        <span className="paint-price-display">
+          ${price !== null ? price.toFixed(2) : '0.01'} USD
+        </span>
+        <button 
+          className="paint-submit-btn"
+          onClick={handleSubmit}
+          disabled={uploading}
+        >
+          {uploading ? 'Uploading...' : 'Upload to Permaweb'}
+        </button>
       </div>
     </div>
   );
@@ -1198,6 +1506,7 @@ export default function App() {
     { id: 'computer', title: 'Computer', x: 80, y: 40, width: 320, height: 260, visible: false, zIndex: 1 },
     { id: 'documents', title: 'Documents', x: 100, y: 50, width: 400, height: 320, visible: false, zIndex: 1 },
     { id: 'notepad', title: 'Notepad', x: 120, y: 60, width: 520, height: 380, visible: true, zIndex: 2 },
+    { id: 'paint', title: 'Paint', x: 60, y: 30, width: 500, height: 420, visible: false, zIndex: 1 },
     { id: 'trash', title: 'Trash', x: 140, y: 80, width: 360, height: 280, visible: false, zIndex: 1 },
   ]);
   const [activeWindow, setActiveWindow] = useState<string | null>('notepad');
@@ -1436,6 +1745,8 @@ export default function App() {
         />
       )}
       
+      {!showSplash && <CharacterPopup isDarkMode={isDarkMode} />}
+      
       <main className="desktop-main">
         <div className="desktop-icons">
           {ICONS.map(icon => (
@@ -1482,6 +1793,14 @@ export default function App() {
             )}
             {window.id === 'trash' && <TrashWindow trashItems={trash} onEmptyTrash={handleEmptyTrash} />}
             {window.id === 'computer' && <ComputerWindow />}
+            {window.id === 'paint' && (
+              <PaintWindow 
+                onSubmit={handleSubmit}
+                onOpenWallet={handleOpenWallet}
+                isWalletConnected={!!address}
+                isDarkMode={isDarkMode}
+              />
+            )}
           </Window>
         ))}
       </main>
