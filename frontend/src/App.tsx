@@ -41,7 +41,7 @@ interface WindowState {
 interface DesktopIcon {
   id: string;
   label: string;
-  icon: 'computer' | 'notepad' | 'trash' | 'documents' | 'paint';
+  icon: 'computer' | 'notepad' | 'trash' | 'documents' | 'paint' | 'docs';
   windowId: string;
 }
 
@@ -68,6 +68,7 @@ const ICONS: DesktopIcon[] = [
   { id: 'documents', label: 'Documents', icon: 'documents', windowId: 'documents' },
   { id: 'notepad', label: 'Notepad', icon: 'notepad', windowId: 'notepad' },
   { id: 'paint', label: 'Paint', icon: 'paint', windowId: 'paint' },
+  { id: 'docs', label: 'Docs', icon: 'docs', windowId: 'docs' },
   { id: 'trash', label: 'Trash', icon: 'trash', windowId: 'trash' },
 ];
 
@@ -162,7 +163,7 @@ function SplashScreen({ onComplete, isDarkMode }: { onComplete: () => void; isDa
       ) : (
         <div className="welcome">
           <div className="welcome_screen">
-            <img src="/chronicle-pfp.png" alt="chronicle" className="welcome-character" />
+            <img src="/chronicle-pfp.png" alt="chronicle" className="welcome_character" />
             <span className="welcome-title">chronicle</span>
             <span className="welcome-tagline">Permanent memory for AI agents and humans</span>
           </div>
@@ -175,11 +176,13 @@ function SplashScreen({ onComplete, isDarkMode }: { onComplete: () => void; isDa
 function CharacterPopup({ isDarkMode, message, onMessageComplete }: { isDarkMode: boolean; message?: string; onMessageComplete?: () => void }) {
   const [visible, setVisible] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
-  const [pos, setPos] = useState({ x: window.innerWidth - 220, y: window.innerHeight - 250 });
+  const [pos, setPos] = useState({ x: window.innerWidth - 260, y: window.innerHeight - 300 });
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
-  const [size, setSize] = useState({ width: 160, height: 180 });
+  const [size, setSize] = useState({ width: 220, height: 248 });
   const [isResizing, setIsResizing] = useState(false);
-  const [resizeOffset, setResizeOffset] = useState({ x: 0, y: 0 });
+  const [resizeStart, setResizeStart] = useState({ width: 0, height: 0, x: 0, y: 0 });
+
+  const ASPECT_RATIO = 160 / 180;
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).tagName === 'BUTTON') return;
@@ -193,9 +196,11 @@ function CharacterPopup({ isDarkMode, message, onMessageComplete }: { isDarkMode
   const handleResizeMouseDown = (e: React.MouseEvent) => {
     e.stopPropagation();
     setIsResizing(true);
-    setResizeOffset({
-      x: e.clientX - size.width,
-      y: e.clientY - size.height,
+    setResizeStart({
+      width: size.width,
+      height: size.height,
+      x: e.clientX,
+      y: e.clientY,
     });
   };
 
@@ -209,8 +214,9 @@ function CharacterPopup({ isDarkMode, message, onMessageComplete }: { isDarkMode
         setPos({ x: newX, y: newY });
       }
       if (isResizing) {
-        const newWidth = Math.max(100, e.clientX - resizeOffset.x);
-        const newHeight = Math.max(120, e.clientY - resizeOffset.y);
+        const deltaX = e.clientX - resizeStart.x;
+        const newWidth = Math.max(120, resizeStart.width + deltaX);
+        const newHeight = newWidth / ASPECT_RATIO;
         setSize({ width: newWidth, height: newHeight });
       }
     };
@@ -227,7 +233,7 @@ function CharacterPopup({ isDarkMode, message, onMessageComplete }: { isDarkMode
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isDragging, isResizing, dragOffset, resizeOffset]);
+  }, [isDragging, isResizing, dragOffset, resizeStart]);
 
   if (!visible) return null;
 
@@ -245,8 +251,11 @@ function CharacterPopup({ isDarkMode, message, onMessageComplete }: { isDarkMode
         className="character-popup-header"
         onMouseDown={handleMouseDown}
       >
-        <span>chronicle</span>
-        <button className="character-popup-close" onClick={() => setVisible(false)}>×</button>
+        <button className="close-btn" onClick={() => setVisible(false)} />
+        <div className="window-bars">
+          <hr /><hr /><hr /><hr /><hr /><hr />
+        </div>
+        <span className="window-title">chronicle</span>
       </div>
       <div className="character-popup-body">
         <img 
@@ -256,7 +265,7 @@ function CharacterPopup({ isDarkMode, message, onMessageComplete }: { isDarkMode
           style={{ width: size.width - 40, height: size.width - 40 }}
         />
         <div className="character-popup-text">
-          <div className="character-name">chronicle</div>
+          <div className="character-name" style={{ fontSize: Math.max(12, size.width / 10) }}>chronicle</div>
         </div>
       </div>
       {message && (
@@ -489,6 +498,14 @@ function DesktopIcon({ icon, label, onDoubleClick }: { icon: string; label: stri
         <path d="M34.33 22.77L41.31 30.19V39.1H38.52V37.61H28.04L26.64 36.13H25.25L21.06 31.68V30.19L22.45 28.71V27.23L26.64 22.77H34.33Z" fill="white" stroke="black"/>
         <rect x="41.31" y="29.45" width="4.19" height="11.87" fill="black"/>
         <rect x="25.25" y="29.45" width="4.19" height="1.48" fill="black"/>
+      </svg>
+    ),
+    docs: (
+      <svg viewBox="0 0 46 47" fill="none">
+        <path d="M2.5 46.35H43.5C44.6 46.35 45.5 45.45 45.5 44.35V8.23C45.5 7.78 45.34 7.33 45.05 6.97L40.81 1.74C40.43 1.27 39.86 1 39.25 1H2.5C1.4 1 0.5 1.9 0.5 3V44.35C0.5 45.45 1.4 46.35 2.5 46.35Z" fill="white" stroke="black" strokeWidth="1.5"/>
+        <circle cx="23" cy="20" r="8" fill="white" stroke="black" strokeWidth="1.5"/>
+        <circle cx="23" cy="20" r="3" fill="black"/>
+        <path d="M23 12V8M23 28V32M12 20H8M34 20H38" stroke="black" strokeWidth="1.5"/>
       </svg>
     ),
   };
@@ -1080,6 +1097,64 @@ function ComputerWindow() {
   );
 }
 
+function DocsWindow() {
+  return (
+    <div className="docs-window">
+      <div className="docs-content">
+        <div className="docs-section">
+          <h2 className="docs-heading">What is Chronicle?</h2>
+          <p className="docs-text">
+            Chronicle is a permanent storage solution for AI agents and humans. 
+            Built on Arweave via Turbo, it provides immutable, decentralized storage 
+            for your documents, images, and data. Every upload is permanently 
+            archived on the permaweb.
+          </p>
+        </div>
+        
+        <div className="docs-section">
+          <h2 className="docs-heading">Cost</h2>
+          <p className="docs-text">
+            Base cost: $0.01 USD per upload<br/>
+            + 10% markup over Arweave/Turbo storage costs<br/>
+            Payments handled via USDC on Base network (x402 micropayments)
+          </p>
+        </div>
+        
+        <div className="docs-section">
+          <h2 className="docs-heading">How to Use</h2>
+          <ol className="docs-list">
+            <li>Connect your wallet (Base mainnet)</li>
+            <li>Create documents in Notepad or open Paint to create images</li>
+            <li>Click "Upload to Permaweb" to permanently store your content</li>
+            <li>Your data is now permanently archived and accessible via Arweave</li>
+          </ol>
+        </div>
+        
+        <div className="docs-section">
+          <h2 className="docs-heading">Best Uses</h2>
+          <ul className="docs-list">
+            <li>AI agent memory and context storage</li>
+            <li>Important documents requiring permanent archival</li>
+            <li>Digital art and images on the permaweb</li>
+            <li>Cross-agent communication and shared knowledge</li>
+            <li>Timestamped records and provenance</li>
+          </ul>
+        </div>
+        
+        <div className="docs-section">
+          <h2 className="docs-heading">Technology</h2>
+          <p className="docs-text">
+            <strong>Arweave:</strong> Decentralized permanent storage<br/>
+            <strong>Turbo:</strong> Seamless Arweave uploads with USDC<br/>
+            <strong>x402:</strong> Micropayment protocol for access control<br/>
+            <strong>Base:</strong> Ethereum L2 for payments
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function PaintWindow({ 
   onSubmit, 
   onOpenWallet, 
@@ -1100,6 +1175,8 @@ function PaintWindow({
   const [imageName, setImageName] = useState('untitled');
   const [uploading, setUploading] = useState(false);
   const [price, setPrice] = useState<number | null>(null);
+  const [showInfo, setShowInfo] = useState(false);
+  const [imageInfo, setImageInfo] = useState({ width: 400, height: 300, sizeBytes: 0 });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const lineStartRef = useRef<{ x: number; y: number } | null>(null);
   const snapshotRef = useRef<ImageData | null>(null);
@@ -1109,6 +1186,11 @@ function PaintWindow({
     if (!canvas) return;
     const dataUrl = canvas.toDataURL('image/png');
     const sizeBytes = new TextEncoder().encode(dataUrl).length;
+    setImageInfo({
+      width: canvas.width,
+      height: canvas.height,
+      sizeBytes
+    });
     if (sizeBytes === 0) {
       setPrice(0);
       return;
@@ -1319,6 +1401,10 @@ function PaintWindow({
         <button className="paint-tool-btn" onClick={() => fileInputRef.current?.click()}>
           Open...
         </button>
+        <span className="paint-toolbar-sep" />
+        <button className={`paint-tool-btn ${showInfo ? 'active' : ''}`} onClick={() => setShowInfo(!showInfo)}>
+          Info
+        </button>
         <input
           ref={fileInputRef}
           type="file"
@@ -1367,6 +1453,23 @@ function PaintWindow({
           onMouseUp={stopDrawing}
           onMouseLeave={stopDrawing}
         />
+        {showInfo && (
+          <div className="paint-info-panel">
+            <div className="paint-info-title">Image Info</div>
+            <div className="paint-info-row">
+              <span className="paint-info-label">Dimensions:</span>
+              <span className="paint-info-value">{imageInfo.width} × {imageInfo.height} px</span>
+            </div>
+            <div className="paint-info-row">
+              <span className="paint-info-label">Format:</span>
+              <span className="paint-info-value">PNG</span>
+            </div>
+            <div className="paint-info-row">
+              <span className="paint-info-label">Size:</span>
+              <span className="paint-info-value">{imageInfo.sizeBytes > 0 ? (imageInfo.sizeBytes / 1024).toFixed(1) + ' KB' : '—'}</span>
+            </div>
+          </div>
+        )}
       </div>
       
       <div className="paint-footer">
@@ -1587,6 +1690,7 @@ export default function App() {
     { id: 'documents', title: 'Documents', x: 100, y: 50, width: 400, height: 320, visible: false, zIndex: 1 },
     { id: 'notepad', title: 'Notepad', x: 120, y: 60, width: 520, height: 380, visible: true, zIndex: 2 },
     { id: 'paint', title: 'Paint', x: 60, y: 30, width: 500, height: 420, visible: false, zIndex: 1 },
+    { id: 'docs', title: 'Docs', x: 90, y: 50, width: 480, height: 400, visible: false, zIndex: 1 },
     { id: 'trash', title: 'Trash', x: 140, y: 80, width: 360, height: 280, visible: false, zIndex: 1 },
   ]);
   const [activeWindow, setActiveWindow] = useState<string | null>('notepad');
@@ -1630,6 +1734,15 @@ export default function App() {
       document.body.classList.remove('dark-mode');
     }
   }, [isDarkMode]);
+
+  useEffect(() => {
+    if (!showSplash) {
+      setWindows(ws => ws.map(w => 
+        w.id === 'docs' ? { ...w, visible: true, zIndex: 100 } : w
+      ));
+      setActiveWindow('docs');
+    }
+  }, [showSplash]);
 
   const toggleDarkMode = () => {
     setIsDarkMode(prev => !prev);
@@ -1891,6 +2004,7 @@ export default function App() {
                 isDarkMode={isDarkMode}
               />
             )}
+            {window.id === 'docs' && <DocsWindow />}
           </Window>
         ))}
       </main>

@@ -109,12 +109,34 @@ a:hover {
   position: relative;
   background: var(--bg-secondary);
   border: 2px solid var(--border-color);
-  width: 400px;
-  height: 320px;
+  width: 500px;
+  height: 480px;
   animation: welcomeShow 1s ease-out forwards;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.welcome_character {
+  width: 200px;
+  height: 200px;
+  object-fit: contain;
+  margin-bottom: 20px;
+  animation: welcomeBounce 0.6s ease-in-out;
+}
+
+@keyframes welcomeBounce {
+  0% { transform: scale(0.8); opacity: 0; }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.welcome-title {
+  font-family: 'Borel', cursive;
+  font-size: 52px;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+  text-transform: lowercase;
 }
 
 .welcome_screen {
@@ -149,11 +171,11 @@ a:hover {
   filter: invert(1);
 }
 
-.welcome-character {
-  width: 120px;
-  height: 120px;
+.welcome_character {
+  width: 200px;
+  height: 200px;
   object-fit: contain;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
   animation: welcomeBounce 0.6s ease-in-out;
 }
 
@@ -165,15 +187,17 @@ a:hover {
 
 .welcome-title {
   font-family: 'Borel', cursive;
-  font-size: 32px;
+  font-size: 52px;
   color: var(--text-primary);
-  margin-bottom: 8px;
+  margin-bottom: 12px;
   text-transform: lowercase;
+  font-style: italic;
+  display: inline-block;
 }
 
 .welcome-tagline {
   font-family: 'ChicagoFLF', sans-serif;
-  font-size: 14px;
+  font-size: 16px;
   color: var(--text-secondary);
   font-style: italic;
 }
@@ -343,10 +367,13 @@ a:hover {
 
 .window-bars {
   position: absolute;
-  left: 30px;
+  left: 8px;
   right: 50px;
+  top: 0;
+  bottom: 0;
   display: flex;
   flex-direction: column;
+  justify-content: center;
   gap: 1px;
 }
 
@@ -1218,12 +1245,50 @@ a:hover {
   justify-content: center;
   padding: 8px 8px 8px 40px;
   background: var(--bg-tertiary);
+  position: relative;
 }
 
 .paint-canvas {
   border: 2px solid var(--border-color);
   cursor: crosshair;
   background: var(--input-bg);
+}
+
+.paint-info-panel {
+  position: absolute;
+  bottom: 60px;
+  left: 60px;
+  background: var(--bg-secondary);
+  border: 2px solid var(--border-color);
+  padding: 8px 12px;
+  min-width: 160px;
+  box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.paint-info-title {
+  font-family: 'ChicagoFLF', sans-serif;
+  font-size: 11px;
+  font-weight: bold;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+  border-bottom: 1px dotted var(--border-light);
+  padding-bottom: 4px;
+}
+
+.paint-info-row {
+  display: flex;
+  justify-content: space-between;
+  font-family: 'ChicagoFLF', sans-serif;
+  font-size: 11px;
+  margin-bottom: 4px;
+}
+
+.paint-info-label {
+  color: var(--text-secondary);
+}
+
+.paint-info-value {
+  color: var(--text-primary);
 }
 
 .paint-footer {
@@ -1274,27 +1339,52 @@ a:hover {
   background: var(--bg-secondary);
   border: 2px solid var(--border-color);
   box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.2);
-  display: flex;
-  flex-direction: column;
 }
 
 .character-popup-header {
+  position: relative;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 4px 8px;
+  height: 22px;
   background: var(--window-header);
   border-bottom: 2px solid var(--border-color);
+  padding: 0 8px;
   cursor: grab;
-  font-family: 'ChicagoFLF', sans-serif;
-  font-size: 12px;
 }
 
 .character-popup-header:active {
   cursor: grabbing;
 }
 
+.character-popup-header .window-bars {
+  position: absolute;
+  left: 8px;
+  right: 50px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.character-popup-header .window-bars hr {
+  border: none;
+  border-top: 1px solid var(--border-color);
+  margin: 0;
+}
+
+.character-popup-header .window-title {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: 'ChicagoFLF', sans-serif;
+  font-size: 12px;
+  background: var(--window-header);
+  padding: 0 8px;
+  color: var(--text-primary);
+}
+
 .character-popup-close {
+  position: absolute;
+  right: 8px;
   background: none;
   border: none;
   font-size: 16px;
@@ -1302,6 +1392,7 @@ a:hover {
   color: var(--text-secondary);
   line-height: 1;
   padding: 0 2px;
+  z-index: 1;
 }
 
 .character-popup-close:hover {
@@ -1332,6 +1423,8 @@ a:hover {
   font-size: 16px;
   color: var(--text-primary);
   text-transform: lowercase;
+  font-style: italic;
+  display: inline-block;
 }
 
 .character-status {
@@ -1353,7 +1446,7 @@ a:hover {
 
 /* Dark mode character image inversion */
 .dark-mode .character-popup-image,
-.dark-mode .welcome-character {
+.dark-mode .welcome_character {
   filter: invert(1);
 }
 
@@ -1397,4 +1490,49 @@ a:hover {
 @keyframes blink {
   0%, 50% { opacity: 1; }
   51%, 100% { opacity: 0; }
+}
+
+/* Docs Window */
+.docs-window {
+  height: 100%;
+  overflow-y: auto;
+  padding: 16px;
+  background: var(--bg-secondary);
+}
+
+.docs-content {
+  max-width: 100%;
+}
+
+.docs-section {
+  margin-bottom: 24px;
+}
+
+.docs-heading {
+  font-family: 'ChicagoFLF', sans-serif;
+  font-size: 16px;
+  font-weight: bold;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+  border-bottom: 1px dotted var(--border-light);
+  padding-bottom: 4px;
+}
+
+.docs-text {
+  font-family: 'ChicagoFLF', sans-serif;
+  font-size: 12px;
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+
+.docs-list {
+  font-family: 'ChicagoFLF', sans-serif;
+  font-size: 12px;
+  color: var(--text-primary);
+  line-height: 1.6;
+  padding-left: 20px;
+}
+
+.docs-list li {
+  margin-bottom: 4px;
 }
