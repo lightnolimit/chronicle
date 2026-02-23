@@ -172,13 +172,17 @@ function SplashScreen({ onComplete, isDarkMode }: { onComplete: () => void; isDa
   );
 }
 
-function CharacterPopup({ isDarkMode }: { isDarkMode: boolean }) {
+function CharacterPopup({ isDarkMode, message, onMessageComplete }: { isDarkMode: boolean; message?: string; onMessageComplete?: () => void }) {
   const [visible, setVisible] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
-  const [pos, setPos] = useState({ x: window.innerWidth - 200, y: window.innerHeight - 200 });
+  const [pos, setPos] = useState({ x: window.innerWidth - 220, y: window.innerHeight - 250 });
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [size, setSize] = useState({ width: 160, height: 180 });
+  const [isResizing, setIsResizing] = useState(false);
+  const [resizeOffset, setResizeOffset] = useState({ x: 0, y: 0 });
 
   const handleMouseDown = (e: React.MouseEvent) => {
+    if ((e.target as HTMLElement).tagName === 'BUTTON') return;
     setIsDragging(true);
     setDragOffset({
       x: e.clientX - pos.x,
@@ -186,17 +190,34 @@ function CharacterPopup({ isDarkMode }: { isDarkMode: boolean }) {
     });
   };
 
+  const handleResizeMouseDown = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsResizing(true);
+    setResizeOffset({
+      x: e.clientX - size.width,
+      y: e.clientY - size.height,
+    });
+  };
+
   useEffect(() => {
-    if (!isDragging) return;
+    if (!isDragging && !isResizing) return;
 
     const handleMouseMove = (e: MouseEvent) => {
-      const newX = Math.max(0, Math.min(e.clientX - dragOffset.x, window.innerWidth - 200));
-      const newY = Math.max(0, Math.min(e.clientY - dragOffset.y, window.innerHeight - 200));
-      setPos({ x: newX, y: newY });
+      if (isDragging) {
+        const newX = Math.max(0, Math.min(e.clientX - dragOffset.x, window.innerWidth - 200));
+        const newY = Math.max(0, Math.min(e.clientY - dragOffset.y, window.innerHeight - 200));
+        setPos({ x: newX, y: newY });
+      }
+      if (isResizing) {
+        const newWidth = Math.max(100, e.clientX - resizeOffset.x);
+        const newHeight = Math.max(120, e.clientY - resizeOffset.y);
+        setSize({ width: newWidth, height: newHeight });
+      }
     };
 
     const handleMouseUp = () => {
       setIsDragging(false);
+      setIsResizing(false);
     };
 
     document.addEventListener('mousemove', handleMouseMove);
@@ -206,7 +227,7 @@ function CharacterPopup({ isDarkMode }: { isDarkMode: boolean }) {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isDragging, dragOffset]);
+  }, [isDragging, isResizing, dragOffset, resizeOffset]);
 
   if (!visible) return null;
 
@@ -216,6 +237,8 @@ function CharacterPopup({ isDarkMode }: { isDarkMode: boolean }) {
       style={{
         left: pos.x,
         top: pos.y,
+        width: size.width,
+        height: size.height,
       }}
     >
       <div 
@@ -230,11 +253,68 @@ function CharacterPopup({ isDarkMode }: { isDarkMode: boolean }) {
           src="/chronicle-pfp.png" 
           alt="chronicle" 
           className="character-popup-image"
+          style={{ width: size.width - 40, height: size.width - 40 }}
         />
         <div className="character-popup-text">
           <div className="character-name">chronicle</div>
-          <div className="character-status">Your AI memory companion</div>
         </div>
+      </div>
+      {message && (
+        <MessageBubble 
+          message={message} 
+          onComplete={onMessageComplete}
+          isDarkMode={isDarkMode}
+        />
+      )}
+      <div 
+        className="character-popup-resize"
+        onMouseDown={handleResizeMouseDown}
+      />
+    </div>
+  );
+}
+
+function playTypewriterSound() {
+  const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+  const oscillator = audioContext.createOscillator();
+  const gainNode = audioContext.createGain();
+  
+  oscillator.connect(gainNode);
+  gainNode.connect(audioContext.destination);
+  
+  oscillator.frequency.value = 800 + Math.random() * 400;
+  oscillator.type = 'square';
+  
+  gainNode.gain.setValueAtTime(0.08, audioContext.currentTime);
+  gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.05);
+  
+  oscillator.start(audioContext.currentTime);
+  oscillator.stop(audioContext.currentTime + 0.05);
+}
+
+function MessageBubble({ message, onComplete, isDarkMode }: { message: string; onComplete?: () => void; isDarkMode: boolean }) {
+  const [displayedText, setDisplayedText] = useState('');
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    if (currentIndex < message.length) {
+      const timeout = setTimeout(() => {
+        setDisplayedText(prev => prev + message[currentIndex]);
+        playTypewriterSound();
+        setCurrentIndex(prev => prev + 1);
+      }, 50 + Math.random() * 50);
+
+      return () => clearTimeout(timeout);
+    } else if (onComplete) {
+      setTimeout(onComplete, 500);
+    }
+  }, [currentIndex, message, onComplete]);
+
+  return (
+    <div className="message-bubble">
+      <div className="message-bubble-content">
+        {displayedText}
+        <span className="message-cursor">|</span>
       </div>
     </div>
   );
@@ -1517,6 +1597,7 @@ export default function App() {
   });
   const [hiddenUploadIds, setHiddenUploadIds] = useState<string[]>(loadHiddenUploads);
   const [showHidden, setShowHidden] = useState(false);
+  const [characterMessage, setCharacterMessage] = useState<string>('');
   const [trash, setTrash] = useState<TrashItem[]>(loadTrash);
   const [confirmDialog, setConfirmDialog] = useState<{
     message: string;
@@ -1697,6 +1778,9 @@ export default function App() {
       const updatedUploads = [...uploads, newUpload];
       setUploads(updatedUploads);
       saveUploads(updatedUploads);
+      
+      const typeLabel = type === 'image' ? 'Image' : type === 'markdown' ? 'Document' : 'Data';
+      setCharacterMessage(`${typeLabel} "${name}" saved to the permaweb!`);
     } catch (error: any) {
       clearInterval(progressInterval);
       console.error('Upload error:', error);
@@ -1745,7 +1829,13 @@ export default function App() {
         />
       )}
       
-      {!showSplash && <CharacterPopup isDarkMode={isDarkMode} />}
+      {!showSplash && (
+        <CharacterPopup 
+          isDarkMode={isDarkMode} 
+          message={characterMessage}
+          onMessageComplete={() => setCharacterMessage('')}
+        />
+      )}
       
       <main className="desktop-main">
         <div className="desktop-icons">
