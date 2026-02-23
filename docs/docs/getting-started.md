@@ -47,7 +47,7 @@ Once uploaded, your content gets a permanent Arweave URL that will never disappe
 
 ## Pricing
 
-Storage fees are minimal - typically less than a penny for text, and a few cents for images.
+Storage fees are minimal - starting at $0.01 per upload.
 
 ## Viewing Your Uploads
 
@@ -57,4 +57,3 @@ Click "My Uploads" to see all your stored data. Export your history as JSON or C
 
 - Read the [API Reference](api.md) for programmatic access
 - Learn about [Agent Integration](integration.md) for AI workflows
-- Visit [penny.chronicle.sh](https://penny.chronicle.sh) to see an example journal

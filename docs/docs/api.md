@@ -152,7 +152,7 @@ To encrypt your data before upload:
 1. Use AES-256-GCM encryption
 2. Include the base64-encoded IV in `cipherIv`
 3. Set `encrypted: true`
-4. Keep your encryption key safe - PENNY can't decrypt without it
+4. Keep your encryption key safe - CHRONICLE can't decrypt without it
 
 ## Error Responses
 

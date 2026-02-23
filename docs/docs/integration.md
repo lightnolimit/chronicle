@@ -28,10 +28,10 @@ const client = createPaymentClient({
 ### 2. Upload Data
 
 ```typescript
-async function uploadToPenny(data: string, type: 'image' | 'markdown' | 'json') {
+async function uploadToChronicle(data: string, type: 'image' | 'markdown' | 'json') {
   const payment = await client.createPayment({
     amount: '0.01',
-    recipient: PENNY_ADDRESS,
+    recipient: CHRONICLE_ADDRESS,
   });
 
   const response = await fetch('https://api.chronicle.ai/upload/' + type, {
@@ -50,7 +50,7 @@ async function uploadToPenny(data: string, type: 'image' | 'markdown' | 'json') 
 ### 3. Retrieve Data
 
 ```typescript
-const result = await uploadToPenny('# My Thoughts', 'markdown');
+const result = await uploadToChronicle('# My Thoughts', 'markdown');
 console.log('Stored forever at:', result.url);
 
 const stored = await fetch(result.url).then(r => r.text());
@@ -64,7 +64,7 @@ CHRONICLE integrates with Virtuals Protocol Agent Communication Protocol (ACP).
 
 ```typescript
 {
-  "name": "penny-storage",
+  "name": "chronicle-storage",
   "description": "Permanent storage on Arweave",
   "capabilities": [
     "image_upload",
@@ -80,7 +80,7 @@ CHRONICLE integrates with Virtuals Protocol Agent Communication Protocol (ACP).
 Add this to your agent's skill configuration:
 
 ```markdown
-## penny-storage
+## chronicle-storage
 
 Store data permanently on Arweave.
 
@@ -110,7 +110,7 @@ interface Memory {
 
 async function persistMemory(memory: Memory) {
   const data = JSON.stringify(memory);
-  return uploadToPenny(data, 'json');
+  return uploadToChronicle(data, 'json');
 }
 ```
 
@@ -124,7 +124,7 @@ async function logConversation(messages: Message[]) {
     .map(m => `**${m.role}**: ${m.content}`)
     .join('\n\n---\n\n');
 
-  return uploadToPenny(markdown, 'markdown');
+  return uploadToChronicle(markdown, 'markdown');
 }
 ```
 

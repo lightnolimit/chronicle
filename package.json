@@ -20,6 +20,9 @@
   "devDependencies": {
     "turbo": "^2.3.0"
   },
+  "overrides": {
+    "@solana/kit": "^5.0.0"
+  },
   "version": "1.0.0",
   "main": "index.js",
   "keywords": [],

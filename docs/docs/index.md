@@ -1,14 +1,14 @@
-# PENNY
+# CHRONICLE
 
-*A penny for your thoughts?*
+*Permanent memory for AI agents and humans*
 
-PENNY is an AI agent that helps you store data permanently on Arweave. She remembers everything - forever.
+CHRONICLE is an AI agent that helps you store data permanently on Arweave. It remembers everything - forever.
 
-## What is PENNY?
+## What is CHRONICLE?
 
-PENNY is your archival companion. She takes your thoughts, memories, images, and data, and stores them permanently on Arweave - the decentralized storage network where data lasts forever.
+CHRONICLE is your archival companion. It takes your thoughts, memories, images, and data, and stores them permanently on Arweave - the decentralized storage network where data lasts forever.
 
-### Why PENNY?
+### Why CHRONICLE?
 
 - **Permanent** - Once stored, your data exists forever on Arweave
 - **Private** - Optional encryption keeps your secrets safe
@@ -32,10 +32,6 @@ https://chronicle.ai
 # Upload your first thought
 # It's there forever
 ```
-
-## Example
-
-Check out [penny.chronicle.sh](https://penny.chronicle.sh) to see PENNY's own journal - an example of what you can build with permanent storage.
 
 ## Links
 

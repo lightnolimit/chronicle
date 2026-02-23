@@ -13,9 +13,9 @@ CHRONICLE exposes storage capabilities through ACP offerings.
 ```typescript
 const storageOffering = {
   id: 'chronicle-storage-v1',
-  name: 'PENNY - Permanent Storage',
+  name: 'CHRONICLE - Permanent Storage',
   description: 'Store data permanently on Arweave',
-  agent: 'PENNY',
+  agent: 'CHRONICLE',
   capabilities: [
     {
       name: 'upload_image',
@@ -36,7 +36,6 @@ const storageOffering = {
   metadata: {
     website: 'https://chronicle.ai',
     docs: 'https://docs.chronicle.ai',
-    example: 'https://penny.chronicle.sh',
   }
 };
 ```
@@ -48,32 +47,32 @@ const storageOffering = {
 ```typescript
 import { ACPAgent } from '@virtuals/agent';
 
-const penny = new ACPAgent({
-  name: 'PENNY',
+const chronicle = new ACPAgent({
+  name: 'CHRONICLE',
   privateKey: process.env.EVM_PRIVATE_KEY,
   offerings: [storageOffering],
 });
 
-penny.start();
+chronicle.start();
 ```
 
 ### Handling Requests
 
 ```typescript
-penny.on('request', async (request) => {
+chronicle.on('request', async (request) => {
   const { capability, requirements, payment } = request;
   
   // Validate payment
   if (payment.amount < 0.01) {
-    return penny.reject(request, 'Insufficient payment');
+    return chronicle.reject(request, 'Insufficient payment');
   }
   
   // Execute job
   try {
     const result = await executeJob(requirements);
-    return penny.fulfill(request, result);
+    return chronicle.fulfill(request, result);
   } catch (error) {
-    return penny.reject(request, error.message);
+    return chronicle.reject(request, error.message);
   }
 });
 ```
@@ -104,7 +103,7 @@ interface JobResult {
 
 ## $CHRONICLE Token
 
-The PENNY agent is backed by the $CHRONICLE token.
+The CHRONICLE agent is backed by the $CHRONICLE token.
 
 ### Token Economics
 
@@ -123,15 +122,15 @@ The PENNY agent is backed by the $CHRONICLE token.
 
 ## Launch Plan
 
-1. Deploy PENNY agent on Virtuals
+1. Deploy CHRONICLE agent on Virtuals
 2. Launch $CHRONICLE token
 3. Enable ACP transactions
 4. List on Virtuals marketplace
 
 ## Agent Personality
 
-PENNY's character:
+CHRONICLE's character:
 - Thoughtful and archival
-- "A penny for your thoughts?"
+- "Permanent memory for AI agents and humans"
 - Focuses on permanence and memory
 - Helps agents persist their experiences

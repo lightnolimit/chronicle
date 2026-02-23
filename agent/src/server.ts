@@ -77,7 +77,21 @@ app.post('/api/upload', async (req, res) => {
 
   try {
     const uploadService = new UploadService(EVM_PRIVATE_KEY);
-    const contentType = type === 'markdown' ? 'text/markdown' : 'application/json';
+    
+    let contentType: string;
+    if (type === 'markdown') {
+      contentType = 'text/markdown';
+    } else if (type === 'image') {
+      // Extract content type from data URL if present
+      if (data.startsWith('data:')) {
+        const match = data.match(/^data:([^;]+)/);
+        contentType = match ? match[1] : 'image/png';
+      } else {
+        contentType = 'image/png';
+      }
+    } else {
+      contentType = 'application/json';
+    }
 
     const result = await uploadService.upload({
       data,

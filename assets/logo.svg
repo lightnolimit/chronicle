@@ -1,0 +1,52 @@
+<svg viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <clipPath id="circle">
+      <circle cx="128" cy="128" r="128"/>
+    </clipPath>
+  </defs>
+  
+  <!-- Background circle -->
+  <circle cx="128" cy="128" r="128" fill="#000000"/>
+  
+  <!-- Sunburst rays (white/light gray) -->
+  <g fill="#1a1a1a" clip-path="url(#circle)">
+    <polygon points="128,128 128,0 140,20 128,128 116,20"/>
+    <polygon points="128,128 256,128 236,140 128,128 236,116"/>
+    <polygon points="128,128 128,256 116,236 128,128 140,236"/>
+    <polygon points="128,128 0,128 20,116 128,128 20,140"/>
+    
+    <polygon points="128,128 218,38 222,54 128,128 202,46"/>
+    <polygon points="128,128 218,218 202,222 128,128 222,202"/>
+    <polygon points="128,128 38,218 34,202 128,128 54,222"/>
+    <polygon points="128,128 38,38 54,34 128,128 34,54"/>
+    
+    <polygon points="128,128 178,5 186,18 128,128 166,12"/>
+    <polygon points="128,128 251,78 238,86 128,128 244,70"/>
+    <polygon points="128,128 251,178 238,170 128,128 244,186"/>
+    <polygon points="128,128 178,251 170,238 128,128 186,244"/>
+    <polygon points="128,128 78,251 70,238 128,128 86,244"/>
+    <polygon points="128,128 5,178 18,170 128,128 12,186"/>
+    <polygon points="128,128 5,78 18,86 128,128 12,70"/>
+    <polygon points="128,128 78,5 86,18 128,128 70,12"/>
+  </g>
+  
+  <!-- Sword (white) -->
+  <g fill="#ffffff">
+    <!-- Blade -->
+    <polygon points="128,40 118,55 118,100 128,115 138,100 138,55"/>
+    
+    <!-- Cross guard -->
+    <rect x="98" y="102" width="60" height="10" rx="2"/>
+    
+    <!-- Grip -->
+    <rect x="120" y="112" width="16" height="50" rx="3"/>
+    
+    <!-- Pommel -->
+    <ellipse cx="128" cy="170" rx="14" ry="10"/>
+    
+    <!-- Grip details (black lines) -->
+    <rect x="120" y="122" width="16" height="2" fill="#000000"/>
+    <rect x="120" y="134" width="16" height="2" fill="#000000"/>
+    <rect x="120" y="146" width="16" height="2" fill="#000000"/>
+  </g>
+</svg>

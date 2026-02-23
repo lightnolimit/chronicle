@@ -464,10 +464,12 @@ function DocumentEditor({
 }) {
   const [content, setContent] = useState(currentDoc?.content || '');
   const [docName, setDocName] = useState(currentDoc?.name || 'Untitled');
-  const [docType, setDocType] = useState<'markdown' | 'json'>(currentDoc?.type || 'markdown');
+  const [docType, setDocType] = useState<'markdown' | 'json' | 'image'>(currentDoc?.type || 'markdown');
   const [uploading, setUploading] = useState(false);
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
   const [price, setPrice] = useState<number | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (currentDoc) {
@@ -491,9 +493,43 @@ function DocumentEditor({
     return () => clearTimeout(timeoutId);
   }, [content]);
 
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const dataUrl = event.target?.result as string;
+      setContent(dataUrl);
+      setImagePreview(dataUrl);
+      setDocName(file.name.replace(/\.[^/.]+$/, ''));
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files[0];
+    if (!file || !file.type.startsWith('image/')) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const dataUrl = event.target?.result as string;
+      setContent(dataUrl);
+      setImagePreview(dataUrl);
+      setDocName(file.name.replace(/\.[^/.]+$/, ''));
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleSave = () => {
     if (!docName.trim()) {
       setSaveStatus('Please enter a document name');
+      return;
+    }
+    if (docType === 'image') {
+      setSaveStatus('Images cannot be saved locally. Upload to Permaweb instead.');
+      setTimeout(() => setSaveStatus(null), 3000);
       return;
     }
     onSave(docName, content, docType);
@@ -510,10 +546,22 @@ function DocumentEditor({
     setUploading(true);
     try {
       await onSubmit(content, docType, docName);
+      if (docType === 'image') {
+        setContent('');
+        setImagePreview(null);
+        setDocName('Untitled');
+      }
     } catch (error) {
       console.error('Upload failed:', error);
     }
     setUploading(false);
+  };
+
+  const handleTypeChange = (newType: 'markdown' | 'json' | 'image') => {
+    setDocType(newType);
+    if (newType !== 'image') {
+      setImagePreview(null);
+    }
   };
 
   return (
@@ -529,27 +577,57 @@ function DocumentEditor({
         <span className="toolbar-sep" />
         <select 
           value={docType} 
-          onChange={(e) => setDocType(e.target.value as 'markdown' | 'json')}
+          onChange={(e) => handleTypeChange(e.target.value as 'markdown' | 'json' | 'image')}
           className="doc-type-select"
         >
           <option value="markdown">Markdown</option>
           <option value="json">JSON</option>
+          <option value="image">Image</option>
         </select>
         <span className="toolbar-sep" />
         <button className="toolbar-btn" onClick={handleSave}>
           {saveStatus || 'Save'}
         </button>
-        <span className="toolbar-sep" />
-        <button className="toolbar-btn">Cut</button>
-        <button className="toolbar-btn">Copy</button>
-        <button className="toolbar-btn">Paste</button>
+        {docType === 'image' && (
+          <>
+            <span className="toolbar-sep" />
+            <button className="toolbar-btn" onClick={() => fileInputRef.current?.click()}>
+              Choose File
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleFileSelect}
+              style={{ display: 'none' }}
+            />
+          </>
+        )}
       </div>
-      <textarea
-        className="editor-textarea"
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
-        placeholder={docType === 'markdown' ? '# Start writing...\n\nYour thoughts here...' : '{\n  "key": "value"\n}'}
-      />
+      {docType === 'image' ? (
+        <div 
+          className="image-drop-zone"
+          onDrop={handleDrop}
+          onDragOver={(e) => e.preventDefault()}
+          onClick={() => fileInputRef.current?.click()}
+        >
+          {imagePreview ? (
+            <img src={imagePreview} alt="Preview" className="image-preview" />
+          ) : (
+            <div className="image-drop-placeholder">
+              <div className="drop-icon">📁</div>
+              <div>Drop image here or click to select</div>
+            </div>
+          )}
+        </div>
+      ) : (
+        <textarea
+          className="editor-textarea"
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          placeholder={docType === 'markdown' ? '# Start writing...\n\nYour thoughts here...' : '{\n  "key": "value"\n}'}
+        />
+      )}
       <div className="editor-footer">
         <span className="price-display">
           ${price !== null ? price.toFixed(2) : '0.01'} USD
