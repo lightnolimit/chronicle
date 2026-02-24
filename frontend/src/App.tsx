@@ -36,6 +36,7 @@ interface WindowState {
   height: number;
   visible: boolean;
   zIndex: number;
+  resizable?: boolean;
 }
 
 interface DesktopIcon {
@@ -178,7 +179,7 @@ function CharacterPopup({ isDarkMode, message, onMessageComplete }: { isDarkMode
   const [isDragging, setIsDragging] = useState(false);
   const [pos, setPos] = useState({ x: window.innerWidth - 260, y: window.innerHeight - 300 });
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
-  const [size, setSize] = useState({ width: 220, height: 248 });
+  const [size, setSize] = useState({ width: 440, height: 496 });
   const [isResizing, setIsResizing] = useState(false);
   const [resizeStart, setResizeStart] = useState({ width: 0, height: 0, x: 0, y: 0 });
 
@@ -252,6 +253,7 @@ function CharacterPopup({ isDarkMode, message, onMessageComplete }: { isDarkMode
         onMouseDown={handleMouseDown}
       >
         <button className="close-btn" onClick={() => setVisible(false)} />
+        <button className="minimize-btn" onClick={() => setVisible(false)} />
         <div className="window-bars">
           <hr /><hr /><hr /><hr /><hr /><hr />
         </div>
@@ -613,6 +615,11 @@ function Window({
           <hr /><hr /><hr /><hr /><hr /><hr />
         </div>
         <span className="window-title">{window.title}</span>
+        {window.resizable !== false && (
+          <div className="window-header-buttons">
+            <button className="minimize-btn" onClick={onClose} />
+          </div>
+        )}
       </div>
       <div className="window-body">
         {children}
@@ -1341,7 +1348,7 @@ function PaintWindow({
 
   return (
     <div className="paint-container">
-      <div className="paint-toolbar">
+      <div className="paint-tools">
         <button 
           className={`paint-tool-btn ${drawMode === 'pen' ? 'active' : ''}`}
           onClick={() => setDrawMode('pen')}
@@ -1366,11 +1373,11 @@ function PaintWindow({
           </svg>
         </button>
         <button 
-          className={`paint-tool-btn ${drawMode === 'line' ? 'active' : ''}`}
+          className={`paint-tool-btn line-btn ${drawMode === 'line' ? 'active' : ''}`}
           onClick={() => setDrawMode('line')}
           title="Line"
         >
-          <hr style={{ width: '14px', transform: 'rotate(-45deg)', border: '1px solid currentColor' }} />
+          <hr />
         </button>
         <button 
           className={`paint-tool-btn ${drawMode === 'spray' ? 'active' : ''}`}
@@ -1393,56 +1400,42 @@ function PaintWindow({
             <rect x="9.91" y="7.48" width="1.32" height="1.32"/>
           </svg>
         </button>
-        <span className="paint-toolbar-sep" />
         <button className="paint-tool-btn" onClick={clearCanvas} title="Clear">
-          Clear
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M2 4h12v8H2V4zm3-2h6v2H5V2z"/>
+          </svg>
         </button>
-        <span className="paint-toolbar-sep" />
-        <button className="paint-tool-btn" onClick={() => fileInputRef.current?.click()}>
-          Open...
-        </button>
-        <span className="paint-toolbar-sep" />
-        <button className={`paint-tool-btn ${showInfo ? 'active' : ''}`} onClick={() => setShowInfo(!showInfo)}>
-          Info
-        </button>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          onChange={handleFileSelect}
-          style={{ display: 'none' }}
-        />
       </div>
       
-      <div className="paint-sidebar">
-        <div className="paint-stroke-label">Size:</div>
+      <div className="paint-strokes">
+        <div className="paint-stroke-label">Size</div>
         <button 
-          className={`paint-stroke-btn ${strokeWidth === 1 ? 'active' : ''}`}
+          className={`paint-stroke-btn solid-1 ${strokeWidth === 1 ? 'active' : ''}`}
           onClick={() => setStrokeWidth(1)}
         >
-          <hr style={{ borderTop: '2px solid currentColor' }} />
+          <hr />
         </button>
         <button 
-          className={`paint-stroke-btn ${strokeWidth === 2 ? 'active' : ''}`}
+          className={`paint-stroke-btn solid-2 ${strokeWidth === 2 ? 'active' : ''}`}
           onClick={() => setStrokeWidth(2)}
         >
-          <hr style={{ borderTop: '3px solid currentColor' }} />
+          <hr />
         </button>
         <button 
-          className={`paint-stroke-btn ${strokeWidth === 4 ? 'active' : ''}`}
+          className={`paint-stroke-btn solid-3 ${strokeWidth === 4 ? 'active' : ''}`}
           onClick={() => setStrokeWidth(4)}
         >
-          <hr style={{ borderTop: '5px solid currentColor' }} />
+          <hr />
         </button>
         <button 
-          className={`paint-stroke-btn ${strokeWidth === 8 ? 'active' : ''}`}
+          className={`paint-stroke-btn solid-4 ${strokeWidth === 8 ? 'active' : ''}`}
           onClick={() => setStrokeWidth(8)}
         >
-          <hr style={{ borderTop: '8px solid currentColor' }} />
+          <hr />
         </button>
       </div>
       
-      <div className="paint-canvas-container">
+      <div className="paint-canvas-area">
         <canvas
           ref={canvasRef}
           width={400}
@@ -1453,23 +1446,6 @@ function PaintWindow({
           onMouseUp={stopDrawing}
           onMouseLeave={stopDrawing}
         />
-        {showInfo && (
-          <div className="paint-info-panel">
-            <div className="paint-info-title">Image Info</div>
-            <div className="paint-info-row">
-              <span className="paint-info-label">Dimensions:</span>
-              <span className="paint-info-value">{imageInfo.width} × {imageInfo.height} px</span>
-            </div>
-            <div className="paint-info-row">
-              <span className="paint-info-label">Format:</span>
-              <span className="paint-info-value">PNG</span>
-            </div>
-            <div className="paint-info-row">
-              <span className="paint-info-label">Size:</span>
-              <span className="paint-info-value">{imageInfo.sizeBytes > 0 ? (imageInfo.sizeBytes / 1024).toFixed(1) + ' KB' : '—'}</span>
-            </div>
-          </div>
-        )}
       </div>
       
       <div className="paint-footer">
@@ -1478,17 +1454,17 @@ function PaintWindow({
           className="paint-name-input"
           value={imageName}
           onChange={(e) => setImageName(e.target.value)}
-          placeholder="Image name"
+          placeholder="Image name..."
         />
         <span className="paint-price-display">
-          ${price !== null ? price.toFixed(2) : '0.01'} USD
+          {price !== null ? `${(price / 1000000).toFixed(4)} USDC` : '—'}
         </span>
         <button 
           className="paint-submit-btn"
+          disabled={uploading || !isWalletConnected}
           onClick={handleSubmit}
-          disabled={uploading}
         >
-          {uploading ? 'Uploading...' : 'Upload to Permaweb'}
+          {uploading ? 'Saving...' : 'Save'}
         </button>
       </div>
     </div>

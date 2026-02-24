@@ -137,6 +137,7 @@ a:hover {
   color: var(--text-primary);
   margin-bottom: 12px;
   text-transform: lowercase;
+  transform: skewX(-2deg);
 }
 
 .welcome_screen {
@@ -192,7 +193,7 @@ a:hover {
   margin-bottom: 12px;
   text-transform: lowercase;
   font-style: italic;
-  display: inline-block;
+  transform: skewX(-2deg);
 }
 
 .welcome-tagline {
@@ -367,8 +368,8 @@ a:hover {
 
 .window-bars {
   position: absolute;
-  left: 8px;
-  right: 50px;
+  left: 0;
+  right: 0;
   top: 0;
   bottom: 0;
   display: flex;
@@ -383,19 +384,40 @@ a:hover {
   margin: 0;
 }
 
+.window-header-buttons {
+  position: absolute;
+  right: 8px;
+  display: flex;
+  gap: 6px;
+  z-index: 1;
+}
+
+.minimize-btn,
 .close-btn {
-  width: 14px;
-  height: 14px;
-  background: var(--close-btn);
-  border: 2px solid var(--border-color);
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
   cursor: pointer;
   position: relative;
   z-index: 1;
 }
 
+.close-btn {
+  background: var(--close-btn);
+  border: 2px solid var(--border-color);
+}
+
 .close-btn:hover {
   background: red;
+}
+
+.minimize-btn {
+  background: #ffcc00;
+  border: 2px solid var(--border-color);
+}
+
+.minimize-btn:hover {
+  background: #e6b800;
 }
 
 .resize-btn {
@@ -1136,12 +1158,175 @@ a:hover {
   background: linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg-elevated) 100%);
 }
 
-/* Paint App */
+/* Paint App - MacPaint Style */
 .paint-container {
   display: flex;
   flex-direction: column;
   height: 100%;
   background: var(--bg-secondary);
+  position: relative;
+}
+
+.paint-tools {
+  position: absolute;
+  left: 4px;
+  top: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-light);
+}
+
+.paint-tool-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-light);
+  cursor: pointer;
+}
+
+.paint-tool-btn:hover {
+  background: var(--bg-elevated);
+}
+
+.paint-tool-btn.active {
+  background: var(--hover-bg);
+  color: var(--hover-text);
+}
+
+.paint-tool-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.paint-tool-btn hr {
+  width: 14px;
+  border: none;
+  border-top: 2px solid currentColor;
+  margin: 0;
+}
+
+.paint-tool-btn.line-btn hr {
+  transform: rotate(-45deg);
+}
+
+.paint-strokes {
+  position: absolute;
+  left: 4px;
+  bottom: 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-light);
+}
+
+.paint-stroke-label {
+  font-family: 'ChicagoFLF', sans-serif;
+  font-size: 9px;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.paint-stroke-btn {
+  width: 32px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-light);
+  cursor: pointer;
+}
+
+.paint-stroke-btn:hover {
+  background: var(--bg-elevated);
+}
+
+.paint-stroke-btn.active {
+  background: var(--hover-bg);
+}
+
+.paint-stroke-btn hr {
+  width: 20px;
+  border: none;
+  border-top: 2px solid currentColor;
+  margin: 0;
+}
+
+.paint-stroke-btn.solid-1 hr { border-top-width: 2px; }
+.paint-stroke-btn.solid-2 hr { border-top-width: 4px; }
+.paint-stroke-btn.solid-3 hr { border-top-width: 6px; }
+.paint-stroke-btn.solid-4 hr { border-top-width: 10px; }
+
+.paint-canvas-area {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #888;
+  margin: 4px;
+  margin-left: 44px;
+  margin-bottom: 36px;
+}
+
+.paint-canvas {
+  background: white;
+  cursor: crosshair;
+}
+
+.paint-footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px;
+  background: var(--bg-tertiary);
+  border-top: 1px solid var(--border-light);
+}
+
+.paint-name-input {
+  font-family: 'Geneva', sans-serif;
+  font-size: 11px;
+  padding: 4px 8px;
+  border: 1px solid var(--border-light);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  width: 120px;
+}
+
+.paint-price-display {
+  font-family: 'ChicagoFLF', sans-serif;
+  font-size: 10px;
+  color: var(--text-secondary);
+}
+
+.paint-submit-btn {
+  font-family: 'ChicagoFLF', sans-serif;
+  font-size: 10px;
+  padding: 4px 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-light);
+  cursor: pointer;
+}
+
+.paint-submit-btn:hover:not(:disabled) {
+  background: var(--hover-bg);
+  color: var(--hover-text);
+}
+
+.paint-submit-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .paint-toolbar {
@@ -1358,8 +1543,8 @@ a:hover {
 
 .character-popup-header .window-bars {
   position: absolute;
-  left: 8px;
-  right: 50px;
+  left: 0;
+  right: 0;
   display: flex;
   flex-direction: column;
   gap: 1px;
@@ -1425,6 +1610,8 @@ a:hover {
   text-transform: lowercase;
   font-style: italic;
   display: inline-block;
+  transform: skewX(-2deg);
+  margin-bottom: 2px;
 }
 
 .character-status {
