@@ -8,6 +8,8 @@ import { calculatePrice, formatPrice } from '../../utils/pricing.js';
 interface DocumentEditorProps {
   onSubmit: (content: string, type: string, name: string) => Promise<void>;
   onSave: (name: string, content: string, type: 'markdown' | 'json') => void;
+  documents?: Document[];
+  onLoadDocument?: (doc: Document) => void;
   currentDoc: Document | null;
   onOpenWallet?: () => void;
   isWalletConnected?: boolean;
@@ -16,6 +18,8 @@ interface DocumentEditorProps {
 export function DocumentEditor({
   onSubmit,
   onSave,
+  documents: _documents,
+  onLoadDocument: _onLoadDocument,
   currentDoc,
   onOpenWallet,
   isWalletConnected,
