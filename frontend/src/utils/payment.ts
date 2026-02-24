@@ -41,3 +41,30 @@ export function decodeBase64(base64String: string): string {
 export function encodeBase64(text: string): string {
   return btoa(unescape(encodeURIComponent(text)));
 }
+
+export function buildPaymentHeader(
+  signature: `0x${string}`,
+  authorization: {
+    from: `0x${string}`;
+    to: `0x${string}`;
+    value: string;
+    validAfter: string;
+    validBefore: string;
+    nonce: `0x${string}`;
+  },
+  accepted: any,
+  network: string
+): string {
+  const payload = {
+    x402Version: 2,
+    scheme: 'exact',
+    network,
+    accepted,
+    payload: {
+      signature,
+      authorization,
+    },
+    extensions: {},
+  };
+  return btoa(JSON.stringify(payload));
+}

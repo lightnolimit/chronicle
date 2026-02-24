@@ -211,6 +211,98 @@ async function uploadToApi(
   };
 }
 
+async function callAiApi(
+  endpoint: string,
+  body: object,
+  walletAddress: string,
+  signTypedData: (args: any) => Promise<`0x${string}`>,
+  chainId?: number
+) {
+  const makeRequest = async (paymentHeader?: string) => {
+    return axios.post(`${API_URL}${endpoint}`, body, {
+      headers: {
+        'Authorization': `Bearer ${walletAddress}:sig`,
+        ...(paymentHeader && { 'PAYMENT-SIGNATURE': paymentHeader }),
+      },
+    });
+  };
+
+  let response;
+  try {
+    response = await makeRequest();
+  } catch (error: any) {
+    if (error.response?.status === 402) {
+      const paymentRequired = error.response.headers['payment-required'];
+      
+      if (!paymentRequired) {
+        throw new Error('Server returned 402 but no payment requirements found');
+      }
+      
+      try {
+        const decoded = JSON.parse(atob(paymentRequired));
+        
+        if (decoded.accepts && decoded.accepts.length > 0) {
+          const accepted = decoded.accepts[0];
+          const amount = accepted.amount;
+          const payTo = accepted.payTo;
+          const network = accepted.network;
+          const usdcAddress = USDC_CONTRACTS[chainId || 8453] || accepted.asset;
+          
+          const now = Math.floor(Date.now() / 1000);
+          const validAfter = now.toString();
+          const validBefore = (now + 300).toString();
+          const nonce = generateNonce();
+          
+          const domain = {
+            ...EIP3009_DOMAIN,
+            chainId: chainId || 8453,
+            verifyingContract: usdcAddress,
+          };
+          
+          const message = {
+            from: walletAddress as `0x${string}`,
+            to: payTo as `0x${string}`,
+            value: amount,
+            validAfter,
+            validBefore,
+            nonce,
+          };
+          
+          const signature = await signTypedData({
+            domain,
+            types: EIP3009_TYPES,
+            primaryType: 'TransferWithAuthorization',
+            message,
+          });
+          
+          const authorization = {
+            from: walletAddress as `0x${string}`,
+            to: payTo as `0x${string}`,
+            value: amount,
+            validAfter,
+            validBefore,
+            nonce,
+          };
+          
+          const paymentHeader = buildPaymentHeader(signature, authorization, accepted, network);
+          response = await makeRequest(paymentHeader);
+        } else {
+          throw new Error('No payment requirements found');
+        }
+      } catch (payError: any) {
+        if (payError.message?.includes('User rejected') || payError.code === 4001) {
+          throw new Error('Payment signature rejected. Please approve the transaction in your wallet and try again.');
+        }
+        throw new Error(`Payment failed: ${payError.message}`);
+      }
+    } else {
+      throw error;
+    }
+  }
+
+  return response.data;
+}
+
 export default function App() {
   const [showSplash, setShowSplash] = useState(true);
   const [documents, setDocuments] = useState<Document[]>(loadDocuments);
@@ -488,6 +580,7 @@ export default function App() {
           onMessageComplete={() => setCharacterMessage('')}
           activeWindow={activeWindow}
           currentDocument={currentDocument}
+          onAiRequest={(endpoint, body) => callAiApi(endpoint, body, address!, signTypedDataAsync, chainId)}
         />
       )}
       

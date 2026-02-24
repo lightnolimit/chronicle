@@ -85,15 +85,39 @@ export function Window({ window: win, onClose, onFocus, onMove, onResize, childr
       onMouseDown={handleMouseDown}
     >
       <div className="window-header" onMouseDown={handleHeaderMouseDown}>
-        <button className="close-btn" onClick={onClose} />
+        <button 
+          className="close-btn" 
+          onClick={(e) => { e.stopPropagation(); onClose(); }}
+          style={{
+            position: 'absolute',
+            left: '3%',
+            top: '1px',
+            border: '1px solid var(--black, black)',
+            background: 'white',
+            width: '12px',
+            height: '12px',
+            cursor: 'pointer',
+          }}
+        />
         <div className="window-bars">
           <hr /><hr /><hr /><hr /><hr /><hr />
         </div>
         <span className="window-title">{win.title}</span>
         {win.resizable !== false && (
-          <div className="window-header-buttons">
-            <button className="minimize-btn" onClick={onClose} />
-          </div>
+          <button 
+            className="minimize-btn"
+            onClick={(e) => { e.stopPropagation(); onClose(); }}
+            style={{
+              position: 'absolute',
+              right: '20px',
+              top: '1px',
+              border: '1px solid var(--black, black)',
+              background: 'white',
+              width: '12px',
+              height: '12px',
+              cursor: 'pointer',
+            }}
+          />
         )}
       </div>
       <div className="window-body">

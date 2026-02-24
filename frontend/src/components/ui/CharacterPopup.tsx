@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAccount } from 'wagmi';
-import axios from 'axios';
 import { MessageBubble } from './MessageBubble.js';
-import { API_URL } from '../../utils/constants.js';
 
 interface CharacterPopupProps {
   isDarkMode: boolean;
@@ -10,6 +8,7 @@ interface CharacterPopupProps {
   onMessageComplete?: () => void;
   activeWindow?: string | null;
   currentDocument?: { name: string; content: string; type: string } | null;
+  onAiRequest?: (endpoint: string, body: object) => Promise<any>;
 }
 
 export function CharacterPopup({
@@ -18,6 +17,7 @@ export function CharacterPopup({
   onMessageComplete,
   activeWindow,
   currentDocument,
+  onAiRequest,
 }: CharacterPopupProps) {
   const [visible, setVisible] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
@@ -50,14 +50,15 @@ export function CharacterPopup({
     const contextInfo = getContextInfo();
 
     try {
-      const response = await axios.post(`${API_URL}/api/ai/text`, {
-        prompt: userMessage + contextInfo,
-      }, {
-        headers: { 'Authorization': `Bearer ${address}:sig` },
-      });
-      setAiMessages(prev => [...prev, { role: 'assistant', content: response.data.text }]);
+      let response: { text?: string } = {};
+      if (onAiRequest) {
+        response = await onAiRequest('/api/ai/text', {
+          prompt: userMessage + contextInfo,
+        });
+      }
+      setAiMessages(prev => [...prev, { role: 'assistant', content: response?.text || 'No response' }]);
     } catch (error: any) {
-      setAiMessages(prev => [...prev, { role: 'assistant', content: `Error: ${error.message}` }]);
+      setAiMessages(prev => [...prev, { role: 'assistant', content: `chronicle error: ${error.response?.status} ${error.message}` }]);
     } finally {
       setAiLoading(false);
     }
@@ -138,9 +139,6 @@ export function CharacterPopup({
           className="character-popup-image"
           style={{ width: 360, height: 360 }}
         />
-        <div className="character-popup-text">
-          <div className="character-name" style={{ fontSize: 16 }}>chronicle</div>
-        </div>
         
         {showChat && (
         <div style={{ 
