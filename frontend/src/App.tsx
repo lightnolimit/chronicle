@@ -165,7 +165,7 @@ function SplashScreen({ onComplete, isDarkMode }: { onComplete: () => void; isDa
       ) : (
         <div className="welcome">
           <div className="welcome_screen">
-            <img src="/chronicle-pfp.png" alt="chronicle" className="welcome_character" />
+            <img src="/chronicle-pfp-2.png" alt="chronicle" className="welcome_character" />
             <span className="welcome-title">chronicle</span>
             <span className="welcome-tagline">Permanent memory for AI agents and humans</span>
           </div>
@@ -187,6 +187,7 @@ function CharacterPopup({ isDarkMode, message, onMessageComplete }: { isDarkMode
   const [aiMessages, setAiMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>([]);
   const [aiInput, setAiInput] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
+  const [showChat, setShowChat] = useState(true);
   const { address } = useAccount();
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
@@ -283,6 +284,20 @@ function CharacterPopup({ isDarkMode, message, onMessageComplete }: { isDarkMode
       >
         <button className="close-btn" onClick={() => setVisible(false)} />
         <button className="minimize-btn" onClick={() => setVisible(false)} />
+        <button 
+          onClick={() => setShowChat(!showChat)} 
+          style={{ 
+            background: 'none', 
+            border: 'none', 
+            cursor: 'pointer',
+            fontSize: '10px',
+            marginLeft: '8px',
+            color: showChat ? '#007bff' : '#888',
+          }}
+          title={showChat ? 'Hide AI Chat' : 'Show AI Chat'}
+        >
+          {showChat ? '◉' : '○'}
+        </button>
         <div className="window-bars">
           <hr /><hr /><hr /><hr /><hr /><hr />
         </div>
@@ -290,7 +305,7 @@ function CharacterPopup({ isDarkMode, message, onMessageComplete }: { isDarkMode
       </div>
       <div className="character-popup-body">
         <img 
-          src="/chronicle-pfp.png" 
+          src="/chronicle-pfp-2.png" 
           alt="chronicle" 
           className="character-popup-image"
           style={{ width: size.width - 40, height: size.width - 40 }}
@@ -299,6 +314,7 @@ function CharacterPopup({ isDarkMode, message, onMessageComplete }: { isDarkMode
           <div className="character-name" style={{ fontSize: Math.max(12, size.width / 10) }}>chronicle</div>
         </div>
         
+        {showChat && (
         <div style={{ 
           border: '1px solid var(--border-light)', 
           marginTop: '8px',
@@ -355,6 +371,7 @@ function CharacterPopup({ isDarkMode, message, onMessageComplete }: { isDarkMode
             </button>
           </div>
         </div>
+        )}
       </div>
       {message && (
         <MessageBubble 
@@ -465,7 +482,7 @@ function MenuBar({ onOpenWallet, isDarkMode, onToggleDark, showHidden, onToggleS
   const menus = [
     { 
       id: 'apple', 
-      label: <img src="/chronicle-pfp.png" alt="chronicle" className="menu-logo" />, 
+      label: <img src="/chronicle-pfp-2.png" alt="chronicle" className="menu-logo" />, 
       items: [
         { label: 'About chronicle...', action: () => {} },
         { label: '────────────', disabled: true },
@@ -1895,8 +1912,8 @@ const MARKUP_PERCENT = 10;
 const BASE_PRICE_USD = 0.01;
 
 function calculatePriceLocal(sizeBytes: number): number {
-  const turboCostPerByte = 0.000000001;
-  const turboCost = sizeBytes * turboCostPerByte;
+  const sizeMiB = sizeBytes / (1024 * 1024);
+  const turboCost = sizeMiB * 0.015;
   const userPrice = Math.max(BASE_PRICE_USD, turboCost * (1 + MARKUP_PERCENT / 100));
   return Math.round(userPrice * 100) / 100;
 }
