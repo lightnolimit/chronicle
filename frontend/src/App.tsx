@@ -175,14 +175,23 @@ function SplashScreen({ onComplete, isDarkMode }: { onComplete: () => void; isDa
   );
 }
 
-function CharacterPopup({ isDarkMode, message, onMessageComplete }: { isDarkMode: boolean; message?: string; onMessageComplete?: () => void }) {
+function CharacterPopup({ 
+  isDarkMode, 
+  message, 
+  onMessageComplete,
+  activeWindow,
+  currentDocument,
+}: { 
+  isDarkMode: boolean; 
+  message?: string; 
+  onMessageComplete?: () => void;
+  activeWindow?: string | null;
+  currentDocument?: { name: string; content: string; type: string } | null;
+}) {
   const [visible, setVisible] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
   const [pos, setPos] = useState({ x: window.innerWidth - 260, y: window.innerHeight - 300 });
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
-  const [size, setSize] = useState({ width: 440, height: 496 });
-  const [isResizing, setIsResizing] = useState(false);
-  const [resizeStart, setResizeStart] = useState({ width: 0, height: 0, x: 0, y: 0 });
   
   const [aiMessages, setAiMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>([]);
   const [aiInput, setAiInput] = useState('');
@@ -190,6 +199,15 @@ function CharacterPopup({ isDarkMode, message, onMessageComplete }: { isDarkMode
   const [showChat, setShowChat] = useState(true);
   const { address } = useAccount();
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+
+  const getContextInfo = () => {
+    if (!activeWindow) return '';
+    const doc = currentDocument;
+    if (activeWindow === 'notepad' && doc) {
+      return `\n\n[Current document: "${doc.name}" (${doc.type})\nContent:\n${doc.content.substring(0, 1000)}]`;
+    }
+    return `\n\n[Active window: ${activeWindow}]`;
+  };
 
   const handleAiSubmit = async () => {
     if (!aiInput.trim() || !address) return;
@@ -199,9 +217,11 @@ function CharacterPopup({ isDarkMode, message, onMessageComplete }: { isDarkMode
     setAiMessages(prev => [...prev, { role: 'user', content: userMessage }]);
     setAiLoading(true);
 
+    const contextInfo = getContextInfo();
+
     try {
       const response = await axios.post(`${API_URL}/api/ai/text`, {
-        prompt: userMessage,
+        prompt: userMessage + contextInfo,
       }, {
         headers: { 'Authorization': `Bearer ${address}:sig` },
       });
@@ -213,8 +233,6 @@ function CharacterPopup({ isDarkMode, message, onMessageComplete }: { isDarkMode
     }
   };
 
-  const ASPECT_RATIO = 160 / 180;
-
   const handleMouseDown = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).tagName === 'BUTTON') return;
     setIsDragging(true);
@@ -224,37 +242,17 @@ function CharacterPopup({ isDarkMode, message, onMessageComplete }: { isDarkMode
     });
   };
 
-  const handleResizeMouseDown = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsResizing(true);
-    setResizeStart({
-      width: size.width,
-      height: size.height,
-      x: e.clientX,
-      y: e.clientY,
-    });
-  };
-
   useEffect(() => {
-    if (!isDragging && !isResizing) return;
+    if (!isDragging) return;
 
     const handleMouseMove = (e: MouseEvent) => {
-      if (isDragging) {
-        const newX = Math.max(0, Math.min(e.clientX - dragOffset.x, window.innerWidth - 200));
-        const newY = Math.max(0, Math.min(e.clientY - dragOffset.y, window.innerHeight - 200));
-        setPos({ x: newX, y: newY });
-      }
-      if (isResizing) {
-        const deltaX = e.clientX - resizeStart.x;
-        const newWidth = Math.max(120, resizeStart.width + deltaX);
-        const newHeight = newWidth / ASPECT_RATIO;
-        setSize({ width: newWidth, height: newHeight });
-      }
+      const newX = Math.max(0, Math.min(e.clientX - dragOffset.x, window.innerWidth - 200));
+      const newY = Math.max(0, Math.min(e.clientY - dragOffset.y, window.innerHeight - 200));
+      setPos({ x: newX, y: newY });
     };
 
     const handleMouseUp = () => {
       setIsDragging(false);
-      setIsResizing(false);
     };
 
     document.addEventListener('mousemove', handleMouseMove);
@@ -264,7 +262,7 @@ function CharacterPopup({ isDarkMode, message, onMessageComplete }: { isDarkMode
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isDragging, isResizing, dragOffset, resizeStart]);
+  }, [isDragging, dragOffset]);
 
   if (!visible) return null;
 
@@ -274,8 +272,8 @@ function CharacterPopup({ isDarkMode, message, onMessageComplete }: { isDarkMode
       style={{
         left: pos.x,
         top: pos.y,
-        width: size.width,
-        height: size.height,
+        width: 400,
+        height: 520,
       }}
     >
       <div 
@@ -308,10 +306,10 @@ function CharacterPopup({ isDarkMode, message, onMessageComplete }: { isDarkMode
           src="/chronicle-pfp-2.png" 
           alt="chronicle" 
           className="character-popup-image"
-          style={{ width: size.width - 40, height: size.width - 40 }}
+          style={{ width: 360, height: 360 }}
         />
         <div className="character-popup-text">
-          <div className="character-name" style={{ fontSize: Math.max(12, size.width / 10) }}>chronicle</div>
+          <div className="character-name" style={{ fontSize: 16 }}>chronicle</div>
         </div>
         
         {showChat && (
@@ -319,9 +317,10 @@ function CharacterPopup({ isDarkMode, message, onMessageComplete }: { isDarkMode
           border: '1px solid var(--border-light)', 
           marginTop: '8px',
           background: 'var(--bg-tertiary)',
-          maxHeight: '150px',
+          maxHeight: '160px',
           display: 'flex',
           flexDirection: 'column',
+          width: '100%',
         }}>
           <div style={{ 
             flex: 1, 
@@ -380,10 +379,6 @@ function CharacterPopup({ isDarkMode, message, onMessageComplete }: { isDarkMode
           isDarkMode={isDarkMode}
         />
       )}
-      <div 
-        className="character-popup-resize"
-        onMouseDown={handleResizeMouseDown}
-      />
     </div>
   );
 }
@@ -860,20 +855,24 @@ function DocumentEditor({
           {saveStatus || 'Save'}
         </button>
         <span className="toolbar-sep" />
-        <button 
-          className={`toolbar-btn ${aiMode === 'summarize' ? 'active' : ''}`}
-          onClick={() => setAiMode(aiMode === 'summarize' ? 'none' : 'summarize')}
-          title="Summarize ($0.01)"
+        <select 
+          value={aiMode}
+          onChange={(e) => setAiMode(e.target.value as typeof aiMode)}
+          style={{
+            padding: '4px 8px',
+            fontSize: '12px',
+            fontFamily: 'ChicagoFLF, sans-serif',
+            background: 'var(--bg-secondary)',
+            color: 'var(--text-primary)',
+            border: '1px solid var(--border-light)',
+            borderRadius: '3px',
+            cursor: 'pointer',
+          }}
         >
-          Summarize
-        </button>
-        <button 
-          className={`toolbar-btn ${aiMode === 'continue' ? 'active' : ''}`}
-          onClick={() => setAiMode(aiMode === 'continue' ? 'none' : 'continue')}
-          title="Continue writing ($0.01)"
-        >
-          Continue
-        </button>
+          <option value="none">AI Actions...</option>
+          <option value="summarize">Summarize</option>
+          <option value="continue">Continue</option>
+        </select>
         {aiMode !== 'none' && (
           <button 
             className="toolbar-btn" 
@@ -1908,13 +1907,11 @@ async function uploadToApi(
   };
 }
 
-const MARKUP_PERCENT = 10;
 const BASE_PRICE_USD = 0.01;
 
 function calculatePriceLocal(sizeBytes: number): number {
   const sizeMiB = sizeBytes / (1024 * 1024);
-  const turboCost = sizeMiB * 0.015;
-  const userPrice = Math.max(BASE_PRICE_USD, turboCost * (1 + MARKUP_PERCENT / 100));
+  const userPrice = Math.max(BASE_PRICE_USD, sizeMiB * 0.01 * 1.25);
   return Math.round(userPrice * 100) / 100;
 }
 
@@ -2193,6 +2190,8 @@ export default function App() {
           isDarkMode={isDarkMode} 
           message={characterMessage}
           onMessageComplete={() => setCharacterMessage('')}
+          activeWindow={activeWindow}
+          currentDocument={currentDocument}
         />
       )}
       
