@@ -13,7 +13,7 @@ interface CharacterPopupProps {
 
 export function CharacterPopup({
   isDarkMode,
-  message,
+  message: externalMessage,
   onMessageComplete,
   activeWindow,
   currentDocument,
@@ -24,11 +24,19 @@ export function CharacterPopup({
   const [pos, setPos] = useState({ x: window.innerWidth - 260, y: window.innerHeight - 300 });
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   
+  const [bubbleMessage, setBubbleMessage] = useState<string>('');
   const [aiMessages, setAiMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>([]);
   const [aiInput, setAiInput] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
   const [showChat, setShowChat] = useState(true);
   const { address } = useAccount();
+
+  const activeMessage = bubbleMessage || externalMessage || '';
+
+  const dismissBubble = () => {
+    setBubbleMessage('');
+    onMessageComplete?.();
+  };
 
   const getContextInfo = () => {
     if (!activeWindow) return '';
@@ -56,9 +64,13 @@ export function CharacterPopup({
           prompt: userMessage + contextInfo,
         });
       }
-      setAiMessages(prev => [...prev, { role: 'assistant', content: response?.text || 'No response' }]);
+      const assistantMessage = response?.text || 'No response';
+      setAiMessages(prev => [...prev, { role: 'assistant', content: assistantMessage }]);
+      setBubbleMessage(assistantMessage);
     } catch (error: any) {
-      setAiMessages(prev => [...prev, { role: 'assistant', content: `chronicle error: ${error.response?.status} ${error.message}` }]);
+      const errorMessage = `Error: ${error.response?.status || 'payment failed'} - ${error.message}`;
+      setAiMessages(prev => [...prev, { role: 'assistant', content: errorMessage }]);
+      setBubbleMessage(errorMessage);
     } finally {
       setAiLoading(false);
     }
@@ -200,10 +212,10 @@ export function CharacterPopup({
         </div>
         )}
       </div>
-      {message && (
+      {activeMessage && (
         <MessageBubble 
-          message={message} 
-          onComplete={onMessageComplete}
+          message={activeMessage} 
+          onComplete={dismissBubble}
           isDarkMode={isDarkMode}
         />
       )}
