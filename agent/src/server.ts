@@ -7,17 +7,19 @@ import { facilitator } from '@payai/facilitator';
 import { HTTPFacilitatorClient } from '@x402/core/server';
 import { getUserUploads, getUserUploadCount, exportUploadsJson, exportUploadsCsv, recordUpload } from '../src/services/database.js';
 import { UploadService } from '../src/services/upload.js';
+import { generateText, generateImage, editImage, generateVideo } from '../src/handlers/ai_generate.js';
 
 const app = express();
 app.use(cors({
   exposedHeaders: ['payment-required', 'payment-response', 'PAYMENT-SIGNATURE'],
 }));
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({ limit: '50mb' }));
 
 const AUTH_HEADER = process.env.API_AUTH_HEADER || 'authorization';
 const EVM_PRIVATE_KEY = process.env.EVM_PRIVATE_KEY;
 const EVM_ADDRESS = process.env.EVM_ADDRESS as string;
 const NETWORK = process.env.NETWORK || 'base-sepolia';
+const IS_MAINNET = NETWORK === 'base';
 
 const networkChainId = NETWORK === 'base' ? 'eip155:8453' : 'eip155:84532';
 
@@ -38,6 +40,54 @@ app.use(
           },
         ],
         description: 'Upload document to Arweave via Turbo',
+        mimeType: 'application/json',
+      },
+      'POST /api/ai/text': {
+        accepts: [
+          {
+            scheme: 'exact',
+            price: '$0.01',
+            network: networkChainId,
+            payTo: EVM_ADDRESS,
+          },
+        ],
+        description: 'AI text generation via Qwen3-32B',
+        mimeType: 'application/json',
+      },
+      'POST /api/ai/image': {
+        accepts: [
+          {
+            scheme: 'exact',
+            price: '$0.05',
+            network: networkChainId,
+            payTo: EVM_ADDRESS,
+          },
+        ],
+        description: 'AI image generation',
+        mimeType: 'application/json',
+      },
+      'POST /api/ai/image-edit': {
+        accepts: [
+          {
+            scheme: 'exact',
+            price: '$0.05',
+            network: networkChainId,
+            payTo: EVM_ADDRESS,
+          },
+        ],
+        description: 'AI image editing',
+        mimeType: 'application/json',
+      },
+      'POST /api/ai/video': {
+        accepts: [
+          {
+            scheme: 'exact',
+            price: '$0.10',
+            network: networkChainId,
+            payTo: EVM_ADDRESS,
+          },
+        ],
+        description: 'AI video generation',
         mimeType: 'application/json',
       },
     },
@@ -143,6 +193,21 @@ app.get('/api/price', (req, res) => {
   res.json({ priceUsd, sizeBytes });
 });
 
+app.get('/api/ai/status', (req, res) => {
+  const chutesConfigured = !!process.env.CHUTES_API_KEY;
+  res.json({
+    available: IS_MAINNET && chutesConfigured,
+    chutesConfigured,
+    network: NETWORK,
+    rates: {
+      text: '$0.01',
+      image: '$0.05',
+      imageEdit: '$0.05',
+      video: '$0.10',
+    },
+  });
+});
+
 app.get('/api/uploads', (req, res) => {
   const walletAddress = authenticate(req);
   if (!walletAddress) {
@@ -190,6 +255,108 @@ app.get('/api/uploads/export', (req, res) => {
   res.setHeader('Content-Type', 'application/json');
   res.setHeader('Content-Disposition', 'attachment; filename=chronicle-uploads.json');
   res.send(json);
+});
+
+// AI Generation Endpoints
+
+app.post('/api/ai/text', async (req, res) => {
+  const walletAddress = authenticate(req);
+  if (!walletAddress) {
+    return res.status(401).json({ error: 'AUTH_REQUIRED', message: 'Missing or invalid authorization header' });
+  }
+
+  if (!IS_MAINNET) {
+    return res.status(503).json({ error: 'NOT_AVAILABLE', message: 'AI generation is only available on mainnet' });
+  }
+
+  const { prompt, max_tokens, temperature } = req.body;
+
+  if (!prompt) {
+    return res.status(400).json({ error: 'INVALID_REQUEST', message: 'Missing prompt' });
+  }
+
+  try {
+    const result = await generateText({ prompt, max_tokens, temperature }, walletAddress);
+    res.json(result);
+  } catch (error: any) {
+    console.error('Text generation error:', error);
+    res.status(500).json({ error: 'GENERATION_FAILED', message: error.message || 'Text generation failed' });
+  }
+});
+
+app.post('/api/ai/image', async (req, res) => {
+  const walletAddress = authenticate(req);
+  if (!walletAddress) {
+    return res.status(401).json({ error: 'AUTH_REQUIRED', message: 'Missing or invalid authorization header' });
+  }
+
+  if (!IS_MAINNET) {
+    return res.status(503).json({ error: 'NOT_AVAILABLE', message: 'AI generation is only available on mainnet' });
+  }
+
+  const { prompt, width, height } = req.body;
+
+  if (!prompt) {
+    return res.status(400).json({ error: 'INVALID_REQUEST', message: 'Missing prompt' });
+  }
+
+  try {
+    const result = await generateImage({ prompt, width, height }, walletAddress);
+    res.json(result);
+  } catch (error: any) {
+    console.error('Image generation error:', error);
+    res.status(500).json({ error: 'GENERATION_FAILED', message: error.message || 'Image generation failed' });
+  }
+});
+
+app.post('/api/ai/image-edit', async (req, res) => {
+  const walletAddress = authenticate(req);
+  if (!walletAddress) {
+    return res.status(401).json({ error: 'AUTH_REQUIRED', message: 'Missing or invalid authorization header' });
+  }
+
+  if (!IS_MAINNET) {
+    return res.status(503).json({ error: 'NOT_AVAILABLE', message: 'AI generation is only available on mainnet' });
+  }
+
+  const { prompt, image_b64, width, height, negative_prompt, num_inference_steps, true_cfg_scale } = req.body;
+
+  if (!prompt || !image_b64) {
+    return res.status(400).json({ error: 'INVALID_REQUEST', message: 'Missing prompt or image' });
+  }
+
+  try {
+    const result = await editImage({ prompt, image_b64, width, height, negative_prompt, num_inference_steps, true_cfg_scale }, walletAddress);
+    res.json(result);
+  } catch (error: any) {
+    console.error('Image edit error:', error);
+    res.status(500).json({ error: 'GENERATION_FAILED', message: error.message || 'Image editing failed' });
+  }
+});
+
+app.post('/api/ai/video', async (req, res) => {
+  const walletAddress = authenticate(req);
+  if (!walletAddress) {
+    return res.status(401).json({ error: 'AUTH_REQUIRED', message: 'Missing or invalid authorization header' });
+  }
+
+  if (!IS_MAINNET) {
+    return res.status(503).json({ error: 'NOT_AVAILABLE', message: 'AI generation is only available on mainnet' });
+  }
+
+  const { prompt, image_b64, guidance_scale, negative_prompt } = req.body;
+
+  if (!prompt || !image_b64) {
+    return res.status(400).json({ error: 'INVALID_REQUEST', message: 'Missing prompt or image' });
+  }
+
+  try {
+    const result = await generateVideo({ prompt, image_b64, guidance_scale, negative_prompt }, walletAddress);
+    res.json(result);
+  } catch (error: any) {
+    console.error('Video generation error:', error);
+    res.status(500).json({ error: 'GENERATION_FAILED', message: error.message || 'Video generation failed' });
+  }
 });
 
 const PORT = process.env.PORT || 3001;
