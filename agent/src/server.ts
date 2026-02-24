@@ -179,11 +179,14 @@ app.post('/api/upload', async (req, res) => {
   }
 });
 
+const BASE_PRICE_USD = 0.01;
+const TURBO_COST_PER_MIB = 0.01;
+const MARKUP_MULTIPLIER = 1.25;
+
 function calculatePrice(sizeBytes: number): number {
-  const basePrice = 0.01;
-  const pricePerByte = 0.0000001;
-  const calculated = basePrice + (sizeBytes * pricePerByte);
-  return Math.round(calculated * 100) / 100;
+  const sizeMiB = sizeBytes / (1024 * 1024);
+  const userPrice = Math.max(BASE_PRICE_USD, sizeMiB * TURBO_COST_PER_MIB * MARKUP_MULTIPLIER);
+  return Math.round(userPrice * 100) / 100;
 }
 
 app.get('/api/price', (req, res) => {

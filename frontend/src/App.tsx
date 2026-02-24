@@ -4,28 +4,9 @@ import { useConnectModal } from '@rainbow-me/rainbowkit';
 import axios from 'axios';
 import './index.css';
 
+import { USDC_CONTRACTS, EIP3009_DOMAIN, EIP3009_TYPES, generateNonce } from './utils/payment';
+
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-
-const USDC_CONTRACTS: Record<number, `0x${string}`> = {
-  8453: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
-  84532: '0x036CbD53842c5426634e7929541eC2318f3dCF7e',
-};
-
-const EIP3009_DOMAIN = {
-  name: 'USD Coin',
-  version: '2',
-};
-
-const EIP3009_TYPES = {
-  TransferWithAuthorization: [
-    { name: 'from', type: 'address' },
-    { name: 'to', type: 'address' },
-    { name: 'value', type: 'uint256' },
-    { name: 'validAfter', type: 'uint256' },
-    { name: 'validBefore', type: 'uint256' },
-    { name: 'nonce', type: 'bytes32' },
-  ],
-};
 
 interface WindowState {
   id: string;
@@ -1770,12 +1751,6 @@ async function processImageUrls(content: string): Promise<string> {
   }
   
   return processedContent;
-}
-
-function generateNonce(): `0x${string}` {
-  const bytes = new Uint8Array(32);
-  crypto.getRandomValues(bytes);
-  return `0x${Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('')}` as `0x${string}`;
 }
 
 function buildPaymentHeader(
