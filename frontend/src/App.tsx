@@ -42,7 +42,7 @@ interface WindowState {
 interface DesktopIcon {
   id: string;
   label: string;
-  icon: 'computer' | 'notepad' | 'trash' | 'documents' | 'paint' | 'docs';
+  icon: 'computer' | 'notepad' | 'trash' | 'documents' | 'paint' | 'docs' | 'video';
   windowId: string;
 }
 
@@ -69,6 +69,7 @@ const ICONS: DesktopIcon[] = [
   { id: 'documents', label: 'Documents', icon: 'documents', windowId: 'documents' },
   { id: 'notepad', label: 'Notepad', icon: 'notepad', windowId: 'notepad' },
   { id: 'paint', label: 'Paint', icon: 'paint', windowId: 'paint' },
+  { id: 'video', label: 'Video', icon: 'video', windowId: 'video' },
   { id: 'docs', label: 'Docs', icon: 'docs', windowId: 'docs' },
   { id: 'trash', label: 'Trash', icon: 'trash', windowId: 'trash' },
 ];
@@ -303,7 +304,7 @@ function playTypewriterSound() {
   oscillator.stop(audioContext.currentTime + 0.05);
 }
 
-function MessageBubble({ message, onComplete, isDarkMode }: { message: string; onComplete?: () => void; isDarkMode: boolean }) {
+function MessageBubble({ message, onComplete }: { message: string; onComplete?: () => void; isDarkMode?: boolean }) {
   const [displayedText, setDisplayedText] = useState('');
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -500,6 +501,13 @@ function DesktopIcon({ icon, label, onDoubleClick }: { icon: string; label: stri
         <path d="M34.33 22.77L41.31 30.19V39.1H38.52V37.61H28.04L26.64 36.13H25.25L21.06 31.68V30.19L22.45 28.71V27.23L26.64 22.77H34.33Z" fill="white" stroke="black"/>
         <rect x="41.31" y="29.45" width="4.19" height="11.87" fill="black"/>
         <rect x="25.25" y="29.45" width="4.19" height="1.48" fill="black"/>
+      </svg>
+    ),
+    video: (
+      <svg viewBox="0 0 46 47" fill="none">
+        <path d="M2.5 46.35H43.5C44.6 46.35 45.5 45.45 45.5 44.35V8.23C45.5 7.78 45.34 7.33 45.05 6.97L40.81 1.74C40.43 1.27 39.86 1 39.25 1H2.5C1.4 1 0.5 1.9 0.5 3V44.35C0.5 45.45 1.4 46.35 2.5 46.35Z" fill="white" stroke="black" strokeWidth="1.5"/>
+        <rect x="8" y="12" width="24" height="18" fill="black" rx="1"/>
+        <polygon points="18,16 18,30 30,21" fill="white"/>
       </svg>
     ),
     docs: (
@@ -875,6 +883,140 @@ function TrashWindow({
   );
 }
 
+function VideoWindow({
+  onSubmit,
+  onOpenWallet,
+  isWalletConnected,
+}: {
+  onSubmit: (content: string, type: string, name: string) => Promise<void>;
+  onOpenWallet?: () => void;
+  isWalletConnected?: boolean;
+}) {
+  const [prompt, setPrompt] = useState('');
+  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [generatedVideo, setGeneratedVideo] = useState<string | null>(null);
+  const [videoName, setVideoName] = useState('untitled');
+  const [generating, setGenerating] = useState(false);
+  const [uploading, setUploading] = useState(false);
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const result = ev.target?.result as string;
+      setUploadedImage(result.split(',')[1]);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleGenerate = () => {
+    if (!prompt || !uploadedImage) return;
+    setGenerating(true);
+    // TODO: Call API with payment - setGeneratedVideo will be used when connected
+    setTimeout(() => {
+      setGenerating(false);
+      // For demo, show a placeholder video URL when ready
+      setGeneratedVideo('https://sample-videos.com/video321/mp4/720/big_buck_bunny_720p_1mb.mp4');
+    }, 1000);
+  };
+
+  const handleUpload = async () => {
+    if (!generatedVideo) return;
+    if (!isWalletConnected) {
+      onOpenWallet?.();
+      return;
+    }
+    setUploading(true);
+    try {
+      await onSubmit(generatedVideo, 'video', videoName);
+    } catch (error) {
+      console.error('Upload failed:', error);
+    }
+    setUploading(false);
+  };
+
+  return (
+    <div style={{ padding: '12px', height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ marginBottom: '12px' }}>
+        <label style={{ display: 'block', marginBottom: '4px', fontFamily: 'ChicagoFLF', fontSize: '11px' }}>
+          Upload Image
+        </label>
+        <input type="file" accept="image/*" onChange={handleImageUpload} />
+        {uploadedImage && (
+          <img 
+            src={`data:image/png;base64,${uploadedImage}`} 
+            alt="Preview" 
+            style={{ maxWidth: '150px', maxHeight: '100px', marginTop: '8px' }} 
+          />
+        )}
+      </div>
+      
+      <div style={{ marginBottom: '12px' }}>
+        <label style={{ display: 'block', marginBottom: '4px', fontFamily: 'ChicagoFLF', fontSize: '11px' }}>
+          Prompt
+        </label>
+        <textarea
+          value={prompt}
+          onChange={(e) => setPrompt(e.target.value)}
+          placeholder="Describe the motion you want..."
+          style={{ 
+            width: '100%', 
+            height: '60px', 
+            fontFamily: 'Geneva', 
+            fontSize: '11px',
+            padding: '4px',
+          }}
+        />
+      </div>
+      
+      <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '12px' }}>
+        <button 
+          onClick={handleGenerate}
+          disabled={!prompt || !uploadedImage || generating}
+          style={{
+            padding: '6px 12px',
+            fontFamily: 'ChicagoFLF',
+            fontSize: '11px',
+            cursor: 'pointer',
+          }}
+        >
+          {generating ? 'Generating...' : 'Generate'}
+        </button>
+        <span style={{ fontFamily: 'ChicagoFLF', fontSize: '10px', color: '#666' }}>$0.10</span>
+      </div>
+      
+      {generatedVideo && (
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#888' }}>
+          <video src={generatedVideo} controls style={{ maxWidth: '100%', maxHeight: '200px' }} />
+        </div>
+      )}
+      
+      <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginTop: 'auto', paddingTop: '8px', borderTop: '1px solid #ccc' }}>
+        <input
+          type="text"
+          value={videoName}
+          onChange={(e) => setVideoName(e.target.value)}
+          placeholder="Video name..."
+          style={{ padding: '4px', fontFamily: 'Geneva', fontSize: '11px', flex: 1 }}
+        />
+        <button 
+          onClick={handleUpload}
+          disabled={uploading || !generatedVideo}
+          style={{
+            padding: '4px 12px',
+            fontFamily: 'ChicagoFLF',
+            fontSize: '11px',
+            cursor: 'pointer',
+          }}
+        >
+          {uploading ? 'Saving...' : 'Save'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 interface ConfirmDialogProps {
   message: string;
   onConfirm: () => void;
@@ -1105,6 +1247,35 @@ function ComputerWindow() {
 }
 
 function DocsWindow() {
+  const [aiMessages, setAiMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>([]);
+  const [aiInput, setAiInput] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
+  const { address } = useAccount();
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+
+  const handleAiSubmit = async () => {
+    if (!aiInput.trim() || !address) return;
+    
+    const userMessage = aiInput.trim();
+    setAiInput('');
+    setAiMessages(prev => [...prev, { role: 'user', content: userMessage }]);
+    setAiLoading(true);
+
+    try {
+      // TODO: Add proper payment flow
+      const response = await axios.post(`${API_URL}/api/ai/text`, {
+        prompt: userMessage,
+      }, {
+        headers: { 'Authorization': `Bearer ${address}:sig` },
+      });
+      setAiMessages(prev => [...prev, { role: 'assistant', content: response.data.text }]);
+    } catch (error: any) {
+      setAiMessages(prev => [...prev, { role: 'assistant', content: `Error: ${error.message}. Add CHUTES_API_KEY to your .env file.` }]);
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
   return (
     <div className="docs-window">
       <div className="docs-content">
@@ -1123,6 +1294,9 @@ function DocsWindow() {
           <p className="docs-text">
             Base cost: $0.01 USD per upload<br/>
             + 10% markup over Arweave/Turbo storage costs<br/>
+            AI Text Generation: $0.01<br/>
+            AI Image Generation: $0.05<br/>
+            AI Video Generation: $0.10<br/>
             Payments handled via USDC on Base network (x402 micropayments)
           </p>
         </div>
@@ -1132,6 +1306,7 @@ function DocsWindow() {
           <ol className="docs-list">
             <li>Connect your wallet (Base mainnet)</li>
             <li>Create documents in Notepad or open Paint to create images</li>
+            <li>Use AI features in Docs, Paint, and Video apps</li>
             <li>Click "Upload to Permaweb" to permanently store your content</li>
             <li>Your data is now permanently archived and accessible via Arweave</li>
           </ol>
@@ -1154,8 +1329,52 @@ function DocsWindow() {
             <strong>Arweave:</strong> Decentralized permanent storage<br/>
             <strong>Turbo:</strong> Seamless Arweave uploads with USDC<br/>
             <strong>x402:</strong> Micropayment protocol for access control<br/>
-            <strong>Base:</strong> Ethereum L2 for payments
+            <strong>Base:</strong> Ethereum L2 for payments<br/>
+            <strong>Chutes.ai:</strong> AI generation
           </p>
+        </div>
+
+        <div style={{ border: '2px solid #000', marginTop: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px', background: '#fff', borderBottom: '2px solid #000' }}>
+            <img src="/chronicle-pfp.png" alt="" style={{ width: '24px', height: '24px', borderRadius: '4px' }} />
+            <span style={{ fontFamily: 'ChicagoFLF', fontSize: '12px', fontWeight: 'bold' }}>Ask chronicle</span>
+          </div>
+          <div style={{ height: '150px', overflowY: 'auto', padding: '8px', background: '#ddd' }}>
+            {aiMessages.map((msg, i) => (
+              <div key={i} style={{ 
+                marginBottom: '8px', 
+                padding: '6px', 
+                borderRadius: '4px',
+                fontFamily: 'Geneva', 
+                fontSize: '11px',
+                background: msg.role === 'user' ? '#666' : '#fff',
+                color: msg.role === 'user' ? '#fff' : '#000',
+                marginLeft: msg.role === 'user' ? '20px' : '0',
+                marginRight: msg.role === 'assistant' ? '20px' : '0',
+              }}>
+                {msg.role === 'assistant' && <img src="/chronicle-pfp.png" alt="" style={{ width: '16px', height: '16px', verticalAlign: 'middle', marginRight: '4px' }} />}
+                {msg.content}
+              </div>
+            ))}
+            {aiLoading && <div style={{ textAlign: 'center', padding: '12px', fontFamily: 'ChicagoFLF', fontSize: '11px', color: '#666' }}>chronicle is thinking...</div>}
+          </div>
+          <div style={{ display: 'flex', gap: '8px', padding: '8px', background: '#fff', borderTop: '1px solid #ccc' }}>
+            <textarea
+              value={aiInput}
+              onChange={(e) => setAiInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleAiSubmit(); }}}
+              placeholder="Ask chronicle anything..."
+              rows={2}
+              style={{ flex: 1, padding: '6px', fontFamily: 'Geneva', fontSize: '11px', resize: 'none' }}
+            />
+            <button 
+              onClick={handleAiSubmit}
+              disabled={!address || !aiInput.trim() || aiLoading}
+              style={{ padding: '6px 12px', fontFamily: 'ChicagoFLF', fontSize: '11px', cursor: 'pointer' }}
+            >
+              Send
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -1182,9 +1401,6 @@ function PaintWindow({
   const [imageName, setImageName] = useState('untitled');
   const [uploading, setUploading] = useState(false);
   const [price, setPrice] = useState<number | null>(null);
-  const [showInfo, setShowInfo] = useState(false);
-  const [imageInfo, setImageInfo] = useState({ width: 400, height: 300, sizeBytes: 0 });
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const lineStartRef = useRef<{ x: number; y: number } | null>(null);
   const snapshotRef = useRef<ImageData | null>(null);
 
@@ -1193,11 +1409,6 @@ function PaintWindow({
     if (!canvas) return;
     const dataUrl = canvas.toDataURL('image/png');
     const sizeBytes = new TextEncoder().encode(dataUrl).length;
-    setImageInfo({
-      width: canvas.width,
-      height: canvas.height,
-      sizeBytes
-    });
     if (sizeBytes === 0) {
       setPrice(0);
       return;
@@ -1302,30 +1513,6 @@ function PaintWindow({
     ctx.fillRect(0, 0, canvas.width, canvas.height);
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const img = new Image();
-    img.onload = () => {
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
-      
-      ctx.fillStyle = isDarkMode ? '#2a2a2a' : '#ffffff';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      
-      const scale = Math.min(canvas.width / img.width, canvas.height / img.height);
-      const w = img.width * scale;
-      const h = img.height * scale;
-      const x = (canvas.width - w) / 2;
-      const y = (canvas.height - h) / 2;
-      ctx.drawImage(img, x, y, w, h);
-      setImageName(file.name.replace(/\.[^/.]+$/, ''));
-    };
-    img.src = URL.createObjectURL(file);
-  };
 
   const handleSubmit = async () => {
     if (!isWalletConnected) {
@@ -1668,6 +1855,7 @@ export default function App() {
     { id: 'paint', title: 'Paint', x: 60, y: 30, width: 500, height: 420, visible: false, zIndex: 1 },
     { id: 'docs', title: 'Docs', x: 90, y: 50, width: 480, height: 400, visible: false, zIndex: 1 },
     { id: 'trash', title: 'Trash', x: 140, y: 80, width: 360, height: 280, visible: false, zIndex: 1 },
+    { id: 'video', title: 'Video', x: 100, y: 60, width: 500, height: 420, visible: false, zIndex: 1 },
   ]);
   const [activeWindow, setActiveWindow] = useState<string | null>('notepad');
   const [highestZ, setHighestZ] = useState(2);
@@ -1981,6 +2169,13 @@ export default function App() {
               />
             )}
             {window.id === 'docs' && <DocsWindow />}
+            {window.id === 'video' && (
+              <VideoWindow 
+                onSubmit={handleSubmit}
+                onOpenWallet={handleOpenWallet}
+                isWalletConnected={!!address}
+              />
+            )}
           </Window>
         ))}
       </main>
