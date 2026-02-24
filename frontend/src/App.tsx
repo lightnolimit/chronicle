@@ -5,8 +5,30 @@ import axios from 'axios';
 import './index.css';
 
 import { USDC_CONTRACTS, EIP3009_DOMAIN, EIP3009_TYPES, generateNonce } from './utils/payment';
+import { ICONS, API_URL } from './utils/constants';
+import { calculatePrice as calcPrice } from './utils/pricing';
+import type { TrashItem as TrashItemType } from './types/index';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+type TrashItem = TrashItemType;
+import { 
+  loadDocuments as loadDocs, 
+  saveDocuments as saveDocs, 
+  loadUploads as loadUps, 
+  saveUploads as saveUps,
+  loadHiddenUploads as loadHidden,
+  saveHiddenUploads as saveHidden,
+  loadTrash as loadT,
+  saveTrash as saveT
+} from './utils/storage';
+
+const loadDocuments = loadDocs;
+const saveDocuments = saveDocs;
+const loadUploads = loadUps;
+const saveUploads = saveUps;
+const loadHiddenUploads = loadHidden;
+const saveHiddenUploads = saveHidden;
+const loadTrash = loadT;
+const saveTrash = saveT;
 
 interface WindowState {
   id: string;
@@ -43,75 +65,6 @@ interface UploadedDoc {
   name: string;
   timestamp: number;
   walletAddress?: string;
-}
-
-const ICONS: DesktopIcon[] = [
-  { id: 'computer', label: 'Computer', icon: 'computer', windowId: 'computer' },
-  { id: 'documents', label: 'Documents', icon: 'documents', windowId: 'documents' },
-  { id: 'notepad', label: 'Notepad', icon: 'notepad', windowId: 'notepad' },
-  { id: 'paint', label: 'Paint', icon: 'paint', windowId: 'paint' },
-  { id: 'video', label: 'Video', icon: 'video', windowId: 'video' },
-  { id: 'docs', label: 'Docs', icon: 'docs', windowId: 'docs' },
-  { id: 'trash', label: 'Trash', icon: 'trash', windowId: 'trash' },
-];
-
-function loadDocuments(): Document[] {
-  try {
-    const saved = localStorage.getItem('chronicle-documents');
-    return saved ? JSON.parse(saved) : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveDocuments(docs: Document[]) {
-  localStorage.setItem('chronicle-documents', JSON.stringify(docs));
-}
-
-function loadUploads(): UploadedDoc[] {
-  try {
-    const saved = localStorage.getItem('chronicle-uploads');
-    return saved ? JSON.parse(saved) : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveUploads(uploads: UploadedDoc[]) {
-  localStorage.setItem('chronicle-uploads', JSON.stringify(uploads));
-}
-
-function loadHiddenUploads(): string[] {
-  try {
-    const saved = localStorage.getItem('chronicle-hidden-uploads');
-    return saved ? JSON.parse(saved) : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveHiddenUploads(hiddenIds: string[]) {
-  localStorage.setItem('chronicle-hidden-uploads', JSON.stringify(hiddenIds));
-}
-
-interface TrashItem {
-  id: string;
-  name: string;
-  type: string;
-  timestamp: number;
-}
-
-function loadTrash(): TrashItem[] {
-  try {
-    const saved = localStorage.getItem('chronicle-trash');
-    return saved ? JSON.parse(saved) : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveTrash(items: TrashItem[]) {
-  localStorage.setItem('chronicle-trash', JSON.stringify(items));
 }
 
 function SplashScreen({ onComplete, isDarkMode }: { onComplete: () => void; isDarkMode: boolean }) {
@@ -780,7 +733,7 @@ function DocumentEditor({
         setPrice(0);
         return;
       }
-      const calculatedPrice = calculatePriceLocal(sizeBytes);
+      const calculatedPrice = calcPrice(sizeBytes);
       setPrice(calculatedPrice);
     }, 150);
 
@@ -1475,7 +1428,7 @@ function PaintWindow({
       setPrice(0);
       return;
     }
-    const calculatedPrice = calculatePriceLocal(sizeBytes);
+    const calculatedPrice = calcPrice(sizeBytes);
     setPrice(calculatedPrice);
   }, []);
 
@@ -1880,14 +1833,6 @@ async function uploadToApi(
     id: response.data.id,
     url: response.data.url,
   };
-}
-
-const BASE_PRICE_USD = 0.01;
-
-function calculatePriceLocal(sizeBytes: number): number {
-  const sizeMiB = sizeBytes / (1024 * 1024);
-  const userPrice = Math.max(BASE_PRICE_USD, sizeMiB * 0.01 * 1.25);
-  return Math.round(userPrice * 100) / 100;
 }
 
 export default function App() {
