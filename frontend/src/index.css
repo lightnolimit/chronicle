@@ -1631,10 +1631,10 @@ a:hover {
   background: linear-gradient(135deg, transparent 50%, var(--border-light) 50%);
 }
 
-/* Dark mode character image inversion */
+/* Dark mode - no longer invert character images */
 .dark-mode .character-popup-image,
 .dark-mode .welcome_character {
-  filter: invert(1);
+  /* Keep original colors */
 }
 
 /* Message Bubble - MacOS 1984 Style */

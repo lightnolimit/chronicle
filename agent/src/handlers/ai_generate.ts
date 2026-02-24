@@ -8,7 +8,7 @@ interface RateLimitEntry {
 }
 
 const rateLimits = new Map<string, RateLimitEntry>();
-const RATE_LIMIT = 10;
+const RATE_LIMIT = 60;
 const RATE_LIMIT_WINDOW = 60 * 60 * 1000; // 1 hour in milliseconds
 
 function checkRateLimit(walletAddress: string, type: string): boolean {

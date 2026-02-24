@@ -183,6 +183,34 @@ function CharacterPopup({ isDarkMode, message, onMessageComplete }: { isDarkMode
   const [size, setSize] = useState({ width: 440, height: 496 });
   const [isResizing, setIsResizing] = useState(false);
   const [resizeStart, setResizeStart] = useState({ width: 0, height: 0, x: 0, y: 0 });
+  
+  const [aiMessages, setAiMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>([]);
+  const [aiInput, setAiInput] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
+  const { address } = useAccount();
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+
+  const handleAiSubmit = async () => {
+    if (!aiInput.trim() || !address) return;
+    
+    const userMessage = aiInput.trim();
+    setAiInput('');
+    setAiMessages(prev => [...prev, { role: 'user', content: userMessage }]);
+    setAiLoading(true);
+
+    try {
+      const response = await axios.post(`${API_URL}/api/ai/text`, {
+        prompt: userMessage,
+      }, {
+        headers: { 'Authorization': `Bearer ${address}:sig` },
+      });
+      setAiMessages(prev => [...prev, { role: 'assistant', content: response.data.text }]);
+    } catch (error: any) {
+      setAiMessages(prev => [...prev, { role: 'assistant', content: `Error: ${error.message}` }]);
+    } finally {
+      setAiLoading(false);
+    }
+  };
 
   const ASPECT_RATIO = 160 / 180;
 
@@ -269,6 +297,63 @@ function CharacterPopup({ isDarkMode, message, onMessageComplete }: { isDarkMode
         />
         <div className="character-popup-text">
           <div className="character-name" style={{ fontSize: Math.max(12, size.width / 10) }}>chronicle</div>
+        </div>
+        
+        <div style={{ 
+          border: '1px solid var(--border-light)', 
+          marginTop: '8px',
+          background: 'var(--bg-tertiary)',
+          maxHeight: '150px',
+          display: 'flex',
+          flexDirection: 'column',
+        }}>
+          <div style={{ 
+            flex: 1, 
+            overflowY: 'auto', 
+            padding: '6px',
+            fontSize: '10px',
+            fontFamily: 'Geneva, sans-serif',
+          }}>
+            {aiMessages.map((msg, i) => (
+              <div key={i} style={{ 
+                marginBottom: '4px',
+                padding: '4px',
+                background: msg.role === 'user' ? 'var(--hover-bg)' : 'var(--bg-secondary)',
+                borderRadius: '3px',
+              }}>
+                {msg.role === 'user' ? 'You: ' : 'chronicle: '}
+                {msg.content.substring(0, 100)}{msg.content.length > 100 ? '...' : ''}
+              </div>
+            ))}
+            {aiLoading && <div style={{ color: 'var(--text-secondary)' }}>thinking...</div>}
+          </div>
+          <div style={{ display: 'flex', gap: '4px', padding: '4px', borderTop: '1px solid var(--border-light)' }}>
+            <input
+              type="text"
+              value={aiInput}
+              onChange={(e) => setAiInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleAiSubmit(); }}
+              placeholder="Chat with chronicle..."
+              style={{ 
+                flex: 1, 
+                padding: '4px', 
+                fontSize: '10px',
+                fontFamily: 'Geneva, sans-serif',
+              }}
+            />
+            <button 
+              onClick={handleAiSubmit}
+              disabled={!address || !aiInput.trim() || aiLoading}
+              style={{ 
+                padding: '2px 8px', 
+                fontSize: '10px',
+                fontFamily: 'ChicagoFLF, sans-serif',
+                cursor: 'pointer',
+              }}
+            >
+              Send
+            </button>
+          </div>
         </div>
       </div>
       {message && (
@@ -658,6 +743,10 @@ function DocumentEditor({
   const [uploading, setUploading] = useState(false);
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
   const [price, setPrice] = useState<number | null>(null);
+  const [aiMode, setAiMode] = useState<'none' | 'summarize' | 'continue'>('none');
+  const [aiLoading, setAiLoading] = useState(false);
+  const { address } = useAccount();
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
   useEffect(() => {
     if (currentDoc) {
@@ -666,6 +755,30 @@ function DocumentEditor({
       setDocType(currentDoc.type);
     }
   }, [currentDoc]);
+
+  const handleAiAction = async () => {
+    if (!content.trim() || !address) return;
+    
+    setAiLoading(true);
+    let prompt = '';
+    if (aiMode === 'summarize') {
+      prompt = `Summarize the following text concisely:\n\n${content}`;
+    } else if (aiMode === 'continue') {
+      prompt = `Continue writing this text naturally:\n\n${content}`;
+    }
+
+    try {
+      const response = await axios.post(`${API_URL}/api/ai/text`, { prompt }, {
+        headers: { 'Authorization': `Bearer ${address}:sig` },
+      });
+      setContent(prev => prev + '\n\n' + response.data.text);
+    } catch (error: any) {
+      alert(`AI failed: ${error.message}`);
+    } finally {
+      setAiLoading(false);
+      setAiMode('none');
+    }
+  };
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -729,6 +842,30 @@ function DocumentEditor({
         <button className="toolbar-btn" onClick={handleSave}>
           {saveStatus || 'Save'}
         </button>
+        <span className="toolbar-sep" />
+        <button 
+          className={`toolbar-btn ${aiMode === 'summarize' ? 'active' : ''}`}
+          onClick={() => setAiMode(aiMode === 'summarize' ? 'none' : 'summarize')}
+          title="Summarize ($0.01)"
+        >
+          Summarize
+        </button>
+        <button 
+          className={`toolbar-btn ${aiMode === 'continue' ? 'active' : ''}`}
+          onClick={() => setAiMode(aiMode === 'continue' ? 'none' : 'continue')}
+          title="Continue writing ($0.01)"
+        >
+          Continue
+        </button>
+        {aiMode !== 'none' && (
+          <button 
+            className="toolbar-btn" 
+            onClick={handleAiAction}
+            disabled={aiLoading || !content.trim()}
+          >
+            {aiLoading ? 'AI Working...' : `Apply AI ($${0.01.toFixed(2)})`}
+          </button>
+        )}
       </div>
       <textarea
         className="editor-textarea"
@@ -1247,35 +1384,6 @@ function ComputerWindow() {
 }
 
 function DocsWindow() {
-  const [aiMessages, setAiMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>([]);
-  const [aiInput, setAiInput] = useState('');
-  const [aiLoading, setAiLoading] = useState(false);
-  const { address } = useAccount();
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-
-  const handleAiSubmit = async () => {
-    if (!aiInput.trim() || !address) return;
-    
-    const userMessage = aiInput.trim();
-    setAiInput('');
-    setAiMessages(prev => [...prev, { role: 'user', content: userMessage }]);
-    setAiLoading(true);
-
-    try {
-      // TODO: Add proper payment flow
-      const response = await axios.post(`${API_URL}/api/ai/text`, {
-        prompt: userMessage,
-      }, {
-        headers: { 'Authorization': `Bearer ${address}:sig` },
-      });
-      setAiMessages(prev => [...prev, { role: 'assistant', content: response.data.text }]);
-    } catch (error: any) {
-      setAiMessages(prev => [...prev, { role: 'assistant', content: `Error: ${error.message}. Add CHUTES_API_KEY to your .env file.` }]);
-    } finally {
-      setAiLoading(false);
-    }
-  };
-
   return (
     <div className="docs-window">
       <div className="docs-content">
@@ -1305,10 +1413,10 @@ function DocsWindow() {
           <h2 className="docs-heading">How to Use</h2>
           <ol className="docs-list">
             <li>Connect your wallet (Base mainnet)</li>
-            <li>Create documents in Notepad or open Paint to create images</li>
-            <li>Use AI features in Docs, Paint, and Video apps</li>
+            <li>Create documents in Notepad (with AI assist) or open Paint to create images</li>
+            <li>Use AI features in Notepad, Paint, and Video apps</li>
+            <li>Chat with chronicle by clicking on the character</li>
             <li>Click "Upload to Permaweb" to permanently store your content</li>
-            <li>Your data is now permanently archived and accessible via Arweave</li>
           </ol>
         </div>
         
@@ -1332,49 +1440,6 @@ function DocsWindow() {
             <strong>Base:</strong> Ethereum L2 for payments<br/>
             <strong>Chutes.ai:</strong> AI generation
           </p>
-        </div>
-
-        <div style={{ border: '2px solid #000', marginTop: '16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px', background: '#fff', borderBottom: '2px solid #000' }}>
-            <img src="/chronicle-pfp.png" alt="" style={{ width: '24px', height: '24px', borderRadius: '4px' }} />
-            <span style={{ fontFamily: 'ChicagoFLF', fontSize: '12px', fontWeight: 'bold' }}>Ask chronicle</span>
-          </div>
-          <div style={{ height: '150px', overflowY: 'auto', padding: '8px', background: '#ddd' }}>
-            {aiMessages.map((msg, i) => (
-              <div key={i} style={{ 
-                marginBottom: '8px', 
-                padding: '6px', 
-                borderRadius: '4px',
-                fontFamily: 'Geneva', 
-                fontSize: '11px',
-                background: msg.role === 'user' ? '#666' : '#fff',
-                color: msg.role === 'user' ? '#fff' : '#000',
-                marginLeft: msg.role === 'user' ? '20px' : '0',
-                marginRight: msg.role === 'assistant' ? '20px' : '0',
-              }}>
-                {msg.role === 'assistant' && <img src="/chronicle-pfp.png" alt="" style={{ width: '16px', height: '16px', verticalAlign: 'middle', marginRight: '4px' }} />}
-                {msg.content}
-              </div>
-            ))}
-            {aiLoading && <div style={{ textAlign: 'center', padding: '12px', fontFamily: 'ChicagoFLF', fontSize: '11px', color: '#666' }}>chronicle is thinking...</div>}
-          </div>
-          <div style={{ display: 'flex', gap: '8px', padding: '8px', background: '#fff', borderTop: '1px solid #ccc' }}>
-            <textarea
-              value={aiInput}
-              onChange={(e) => setAiInput(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleAiSubmit(); }}}
-              placeholder="Ask chronicle anything..."
-              rows={2}
-              style={{ flex: 1, padding: '6px', fontFamily: 'Geneva', fontSize: '11px', resize: 'none' }}
-            />
-            <button 
-              onClick={handleAiSubmit}
-              disabled={!address || !aiInput.trim() || aiLoading}
-              style={{ padding: '6px 12px', fontFamily: 'ChicagoFLF', fontSize: '11px', cursor: 'pointer' }}
-            >
-              Send
-            </button>
-          </div>
         </div>
       </div>
     </div>
