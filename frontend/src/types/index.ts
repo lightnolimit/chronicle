@@ -13,7 +13,7 @@ export interface WindowState {
 export interface DesktopIcon {
   id: string;
   label: string;
-  icon: 'computer' | 'notepad' | 'trash' | 'documents' | 'paint' | 'docs' | 'video';
+  icon: 'computer' | 'notepad' | 'trash' | 'documents' | 'paint' | 'docs' | 'video' | 'agent';
   windowId: string;
 }
 

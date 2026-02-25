@@ -2,6 +2,12 @@ import 'dotenv/config';
 
 const CHUTES_API_KEY = process.env.CHUTES_API_KEY;
 
+const THINKING_TAG_REGEX = new RegExp('<think>[\\s\\S]*?</think>', 'g');
+
+function stripThinkingTags(text: string): string {
+  return text.replace(THINKING_TAG_REGEX, '').trim();
+}
+
 interface RateLimitEntry {
   count: number;
   resetTime: number;
@@ -9,7 +15,7 @@ interface RateLimitEntry {
 
 const rateLimits = new Map<string, RateLimitEntry>();
 const RATE_LIMIT = 60;
-const RATE_LIMIT_WINDOW = 60 * 60 * 1000; // 1 hour in milliseconds
+const RATE_LIMIT_WINDOW = 60 * 60 * 1000;
 
 function checkRateLimit(walletAddress: string, type: string): boolean {
   const key = `${walletAddress}:${type}`;
@@ -73,8 +79,9 @@ export async function generateText(req: TextGenerationRequest, walletAddress: st
   }
 
   const data: any = await response.json();
+  const rawText = data.choices?.[0]?.message?.content || 'No response generated';
   return {
-    text: data.choices?.[0]?.message?.content || 'No response generated',
+    text: stripThinkingTags(rawText),
   };
 }
 

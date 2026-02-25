@@ -61,6 +61,18 @@ export function DesktopIcon({ icon, label, onDoubleClick }: { icon: string; labe
         <path d="M23 12V8M23 28V32M12 20H8M34 20H38" stroke="black" strokeWidth="1.5"/>
       </svg>
     ),
+    agent: (
+      <svg width="42" viewBox="0 0 42 46" fill="none">
+        <rect x="5" y="0.5" width="32" height="6" rx="1" fill="white" stroke="black" strokeWidth="1.5"/>
+        <rect x="1" y="5.5" width="40" height="34" rx="2" fill="white" stroke="black" strokeWidth="1.5"/>
+        <circle cx="12" cy="16" r="3" fill="black"/>
+        <circle cx="30" cy="16" r="3" fill="black"/>
+        <path d="M13 24H29" stroke="black" strokeWidth="2"/>
+        <rect x="14" y="26" width="14" height="2" fill="black"/>
+        <rect x="8" y="39" width="6" height="5" fill="white" stroke="black" strokeWidth="1.5"/>
+        <rect x="28" y="39" width="6" height="5" fill="white" stroke="black" strokeWidth="1.5"/>
+      </svg>
+    ),
   };
 
   return (

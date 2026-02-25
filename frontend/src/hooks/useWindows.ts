@@ -9,6 +9,7 @@ const DEFAULT_WINDOWS: WindowState[] = [
   { id: 'docs', title: 'Docs', x: 90, y: 50, width: 480, height: 400, visible: false, zIndex: 1 },
   { id: 'trash', title: 'Trash', x: 140, y: 80, width: 360, height: 280, visible: false, zIndex: 1 },
   { id: 'video', title: 'Video', x: 100, y: 60, width: 500, height: 420, visible: false, zIndex: 1 },
+  { id: 'character', title: 'chronicle', x: window.innerWidth - 260, y: window.innerHeight - 300, width: 400, height: 520, visible: true, zIndex: 3 },
 ];
 
 export function useWindows() {

@@ -576,6 +576,8 @@ export default function App() {
       {!showSplash && (
         <CharacterPopup 
           isDarkMode={isDarkMode} 
+          visible={windows.find(w => w.id === 'character')?.visible ?? true}
+          onClose={() => closeWindow('character')}
           message={characterMessage}
           onMessageComplete={() => setCharacterMessage('')}
           activeWindow={activeWindow}
@@ -586,14 +588,24 @@ export default function App() {
       
       <main className="desktop-main">
         <div className="desktop-icons">
-          {ICONS.map(icon => (
+          <div className="desktop-icons-column">
+            {ICONS.filter(icon => icon.id !== 'agent').map(icon => (
+              <DesktopIcon
+                key={icon.id}
+                icon={icon.icon}
+                label={icon.label}
+                onDoubleClick={() => toggleWindow(icon.windowId)}
+              />
+            ))}
+          </div>
+          <div className="desktop-icons-column">
             <DesktopIcon
-              key={icon.id}
-              icon={icon.icon}
-              label={icon.label}
-              onDoubleClick={() => toggleWindow(icon.windowId)}
+              key="agent"
+              icon="agent"
+              label="Agent"
+              onDoubleClick={() => toggleWindow('character')}
             />
-          ))}
+          </div>
         </div>
 
         {windows.map(window => (

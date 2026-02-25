@@ -5,6 +5,15 @@
   font-style: normal;
 }
 
+@font-face {
+  font-family: "Geneva";
+  src: url("//db.onlinewebfonts.com/t/5ef60dc8370b330aa40e0c874bda45aa.woff2") format("woff2"),
+       url("//db.onlinewebfonts.com/t/5ef60dc8370b330aa40e0c874bda45aa.woff") format("woff"),
+       url("//db.onlinewebfonts.com/t/5ef60dc8370b330aa40e0c874bda45aa.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -288,6 +297,12 @@ a:hover {
   position: absolute;
   top: 20px;
   right: 30px;
+  display: flex;
+  flex-direction: row-reverse;
+  gap: 40px;
+}
+
+.desktop-icons-column {
   display: flex;
   flex-direction: column;
   gap: 40px;

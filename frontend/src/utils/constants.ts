@@ -8,6 +8,7 @@ export const ICONS: DesktopIcon[] = [
   { id: 'video', label: 'Video', icon: 'video', windowId: 'video' },
   { id: 'docs', label: 'Docs', icon: 'docs', windowId: 'docs' },
   { id: 'trash', label: 'Trash', icon: 'trash', windowId: 'trash' },
+  { id: 'agent', label: 'Agent', icon: 'agent', windowId: 'character' },
 ];
 
 export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';

@@ -14,12 +14,14 @@
     "format:check": "prettier --check ."
   },
   "dependencies": {
+    "@ai-sdk/openai-compatible": "0.0.13",
     "@ardrive/turbo-sdk": "^1.41.0",
     "@payai/facilitator": "^2.2.4",
     "@x402/axios": "^2.4.0",
     "@x402/evm": "^2.4.0",
     "@x402/express": "^2.4.0",
     "@x402/fetch": "^2.4.0",
+    "ai": "^4.0.0",
     "axios": "^1.7.7",
     "better-sqlite3": "^11.6.0",
     "cors": "^2.8.6",

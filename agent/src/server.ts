@@ -8,6 +8,7 @@ import { HTTPFacilitatorClient } from '@x402/core/server';
 import { getUserUploads, getUserUploadCount, exportUploadsJson, exportUploadsCsv, recordUpload } from '../src/services/database.js';
 import { UploadService } from '../src/services/upload.js';
 import { generateText, generateImage, editImage, generateVideo } from '../src/handlers/ai_generate.js';
+import { handleAgentChat, executeTool } from '../src/services/agent.js';
 
 const app = express();
 app.use(cors({
@@ -88,6 +89,30 @@ app.use(
           },
         ],
         description: 'AI video generation',
+        mimeType: 'application/json',
+      },
+      'POST /api/ai/agent': {
+        accepts: [
+          {
+            scheme: 'exact',
+            price: '$0.02',
+            network: networkChainId,
+            payTo: EVM_ADDRESS,
+          },
+        ],
+        description: 'AI agent with tools for chat and image generation',
+        mimeType: 'application/json',
+      },
+      'POST /api/ai/execute': {
+        accepts: [
+          {
+            scheme: 'exact',
+            price: '$0.05',
+            network: networkChainId,
+            payTo: EVM_ADDRESS,
+          },
+        ],
+        description: 'Execute AI tool (image generation)',
         mimeType: 'application/json',
       },
     },
@@ -284,6 +309,62 @@ app.post('/api/ai/text', async (req, res) => {
   } catch (error: any) {
     console.error('Text generation error:', error);
     res.status(500).json({ error: 'GENERATION_FAILED', message: error.message || 'Text generation failed' });
+  }
+});
+
+app.post('/api/ai/agent', async (req, res) => {
+  const walletAddress = authenticate(req);
+  if (!walletAddress) {
+    return res.status(401).json({ error: 'AUTH_REQUIRED', message: 'Missing or invalid authorization header' });
+  }
+
+  if (!IS_MAINNET) {
+    return res.status(503).json({ error: 'NOT_AVAILABLE', message: 'AI generation is only available on mainnet' });
+  }
+
+  const { prompt, context } = req.body;
+
+  if (!prompt) {
+    return res.status(400).json({ error: 'INVALID_REQUEST', message: 'Missing prompt' });
+  }
+
+  try {
+    const fullPrompt = context ? `${prompt}\n\nContext: ${context}` : prompt;
+    const result = await handleAgentChat(fullPrompt, walletAddress);
+    res.json({
+      text: result.text,
+      toolCalls: result.toolCalls,
+      toolNeeded: result.toolNeeded,
+      price: result.price,
+    });
+  } catch (error: any) {
+    console.error('Agent error:', error);
+    res.status(500).json({ error: 'AGENT_FAILED', message: error.message || 'Agent failed' });
+  }
+});
+
+app.post('/api/ai/execute', async (req, res) => {
+  const walletAddress = authenticate(req);
+  if (!walletAddress) {
+    return res.status(401).json({ error: 'AUTH_REQUIRED', message: 'Missing or invalid authorization header' });
+  }
+
+  if (!IS_MAINNET) {
+    return res.status(503).json({ error: 'NOT_AVAILABLE', message: 'AI generation is only available on mainnet' });
+  }
+
+  const { toolType, prompt } = req.body;
+
+  if (!toolType || !prompt) {
+    return res.status(400).json({ error: 'INVALID_REQUEST', message: 'Missing toolType or prompt' });
+  }
+
+  try {
+    const result = await executeTool(toolType, prompt, walletAddress);
+    res.json(result);
+  } catch (error: any) {
+    console.error('Execute error:', error);
+    res.status(500).json({ error: 'EXECUTE_FAILED', message: error.message || 'Tool execution failed' });
   }
 });
 
