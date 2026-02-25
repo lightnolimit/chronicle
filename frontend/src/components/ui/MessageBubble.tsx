@@ -106,7 +106,7 @@ export function MessageBubble({
         fontFamily: 'ChicagoFLF, sans-serif',
         width: `${maxWidth}px`,
         maxWidth: `${maxWidth}px`,
-        height: '50px',
+        height: '84px',
         overflow: 'hidden',
         boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
         zIndex: 1000,

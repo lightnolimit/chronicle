@@ -37,7 +37,7 @@ export function CharacterPopup({
     : setInternalVisible;
   
   const [isDragging, setIsDragging] = useState(false);
-  const [pos, setPos] = useState({ x: window.innerWidth - 260, y: window.innerHeight - 300 });
+  const [pos, setPos] = useState({ x: window.innerWidth - 410, y: window.innerHeight - 450 });
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   
   const [bubbleMessage, setBubbleMessage] = useState<string>('');
@@ -68,6 +68,25 @@ export function CharacterPopup({
     return `\n\n[Active window: ${activeWindow}]`;
   };
 
+  const playCoinSound = () => {
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    oscillator.frequency.setValueAtTime(1200, audioContext.currentTime);
+    oscillator.frequency.exponentialRampToValueAtTime(1800, audioContext.currentTime + 0.05);
+    oscillator.type = 'square';
+    
+    gainNode.gain.setValueAtTime(0.15, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.08);
+    
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + 0.08);
+  };
+
   const animatePrice = (targetPrice: number, direction: 'up' | 'down' = 'up') => {
     setIsRouletteAnimating(true);
     const startPrice = direction === 'up' ? 1 : targetPrice * 100;
@@ -78,6 +97,7 @@ export function CharacterPopup({
     const interval = setInterval(() => {
       current += step;
       setDisplayPrice(current / 100);
+      playCoinSound();
       if ((direction === 'up' && current >= endPrice) || (direction === 'down' && current <= endPrice)) {
         clearInterval(interval);
         setIsRouletteAnimating(false);
@@ -291,7 +311,7 @@ export function CharacterPopup({
                   lineHeight: '1.3',
                   fontSize: '12px',
                   fontFamily: 'Geneva, sans-serif',
-                  color: 'var(--hover-text)',
+                  color: '#666',
                   fontStyle: 'italic',
                 }}>
                   (waiting for something...?)
