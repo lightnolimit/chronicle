@@ -68,15 +68,20 @@ export function CharacterPopup({
     return `\n\n[Active window: ${activeWindow}]`;
   };
 
-  const animatePrice = (targetPrice: number) => {
+  const animatePrice = (targetPrice: number, direction: 'up' | 'down' = 'up') => {
     setIsRouletteAnimating(true);
-    let current = 1;
+    const startPrice = direction === 'up' ? 1 : targetPrice * 100;
+    const endPrice = direction === 'up' ? targetPrice * 100 : 1;
+    const step = direction === 'up' ? 1 : -1;
+    let current = startPrice;
+    
     const interval = setInterval(() => {
-      current += 1;
+      current += step;
       setDisplayPrice(current / 100);
-      if (current >= targetPrice * 100) {
+      if ((direction === 'up' && current >= endPrice) || (direction === 'down' && current <= endPrice)) {
         clearInterval(interval);
         setIsRouletteAnimating(false);
+        setDisplayPrice(0.01);
       }
     }, 250);
   };
@@ -125,8 +130,10 @@ export function CharacterPopup({
   const handleYesConfirm = async () => {
     if (!pendingConfirmation || !onAiRequest || !address) return;
     
+    const currentPrice = pendingConfirmation.price;
     setPendingConfirmation(null);
     setAiLoading(true);
+    animatePrice(currentPrice, 'down');
 
     try {
       const response = await onAiRequest('/api/ai/execute', {
@@ -137,21 +144,23 @@ export function CharacterPopup({
       const assistantMessage = response?.text || 'Generation complete!';
       setAiMessages(prev => [...prev, { role: 'assistant', content: assistantMessage }]);
       setBubbleMessage(assistantMessage);
-      setDisplayPrice(0.01);
     } catch (error: any) {
       const errorMessage = `Error: ${error.response?.status || 'payment failed'} - ${error.message}`;
       setAiMessages(prev => [...prev, { role: 'assistant', content: errorMessage }]);
       setBubbleMessage(errorMessage);
-      setDisplayPrice(0.01);
     } finally {
       setAiLoading(false);
     }
   };
 
   const handleNoConfirm = () => {
+    if (!pendingConfirmation) return;
+    const currentPrice = pendingConfirmation.price;
     setPendingConfirmation(null);
-    setBubbleMessage('Cancelled');
-    setDisplayPrice(0.01);
+    animatePrice(currentPrice, 'down');
+    setTimeout(() => {
+      setBubbleMessage('Cancelled');
+    }, 250);
   };
 
   const handleMouseDown = (e: React.MouseEvent) => {
