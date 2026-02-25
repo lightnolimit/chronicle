@@ -314,7 +314,7 @@ export function CharacterPopup({
                   color: '#666',
                   fontStyle: 'italic',
                 }}>
-                  (waiting for something...?)
+                  (what are you waiting for?)
                 </div>
               );
             })()}
@@ -349,13 +349,14 @@ export function CharacterPopup({
         </div>
         )}
       </div>
-      {activeMessage && (
+      {(activeMessage || aiLoading) && (
         <MessageBubble 
-          message={activeMessage} 
+          message={activeMessage || 'thinking'} 
           onComplete={dismissBubble}
           isDarkMode={isDarkMode}
           maxWidth={380}
           showConfirm={!!pendingConfirmation}
+          showThinking={aiLoading && !pendingConfirmation && !activeMessage}
           onYes={handleYesConfirm}
           onNo={handleNoConfirm}
         />

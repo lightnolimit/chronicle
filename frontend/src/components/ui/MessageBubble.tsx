@@ -25,6 +25,7 @@ interface MessageBubbleProps {
   lingerDuration?: number;
   maxWidth?: number;
   showConfirm?: boolean;
+  showThinking?: boolean;
   onYes?: () => void;
   onNo?: () => void;
 }
@@ -36,23 +37,39 @@ export function MessageBubble({
   lingerDuration = 5000, 
   maxWidth = 380,
   showConfirm = false,
+  showThinking = false,
   onYes,
   onNo,
 }: MessageBubbleProps) {
   const [displayed, setDisplayed] = useState('');
   const [isComplete, setIsComplete] = useState(false);
+  const [ellipsis, setEllipsis] = useState('');
   const lingerTimeoutRef = useRef<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (showThinking) {
+      setDisplayed('');
+      setIsComplete(false);
+      const dots = ['', '.', '..', '...'];
+      let i = 0;
+      const interval = setInterval(() => {
+        setEllipsis(dots[i % 4]);
+        i++;
+      }, 400);
+      return () => clearInterval(interval);
+    }
+    
     if (showConfirm) {
       setDisplayed(message);
       setIsComplete(true);
+      setEllipsis('');
       return;
     }
     
     setDisplayed('');
     setIsComplete(false);
+    setEllipsis('');
     let i = 0;
     
     const interval = setInterval(() => {
@@ -67,7 +84,7 @@ export function MessageBubble({
     }, 50);
     
     return () => clearInterval(interval);
-  }, [message, showConfirm]);
+  }, [message, showConfirm, showThinking]);
 
   useEffect(() => {
     if (isComplete && onComplete && !showConfirm) {
@@ -107,25 +124,22 @@ export function MessageBubble({
         width: `${maxWidth}px`,
         maxWidth: `${maxWidth}px`,
         height: '84px',
-        overflow: 'hidden',
+        overflowY: 'auto',
         boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
         zIndex: 1000,
         border: '2px solid black',
         cursor: 'pointer',
         lineHeight: '1.4',
       }}
-      onClick={() => !showConfirm && onComplete?.()}
+      onClick={() => !showConfirm && !showThinking && onComplete?.()}
       title="Click to dismiss"
     >
       <div style={{
-        display: '-webkit-box',
-        WebkitLineClamp: 3,
-        WebkitBoxOrient: 'vertical',
-        overflow: 'hidden',
         whiteSpace: 'pre-wrap',
+        wordBreak: 'break-word',
       }}>
-        {displayed}
-        {!isComplete && !showConfirm && <span style={{ animation: 'blink 0.7s infinite' }}>|</span>}
+        {showThinking ? ellipsis : displayed}
+        {!isComplete && !showConfirm && !showThinking && <span style={{ animation: 'blink 0.7s infinite' }}>|</span>}
       </div>
       {showConfirm && (
         <div style={{ display: 'flex', gap: '8px', marginTop: '6px', justifyContent: 'center' }}>
