@@ -37,7 +37,7 @@ export function CharacterPopup({
     : setInternalVisible;
   
   const [isDragging, setIsDragging] = useState(false);
-  const [pos, setPos] = useState({ x: window.innerWidth - 410, y: window.innerHeight - 450 });
+  const [pos, setPos] = useState({ x: window.innerWidth - 510, y: window.innerHeight - 550 });
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   
   const [bubbleMessage, setBubbleMessage] = useState<string>('');
@@ -277,7 +277,7 @@ export function CharacterPopup({
               {isRouletteAnimating ? `${displayPrice.toFixed(2)}¢` : `${(displayPrice * 100).toFixed(0)}¢`}
             </span>
           </div>
-          <div style={{ width: '250px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          <div style={{ width: '265px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
             {(() => {
               const lastUserMessage = aiMessages.filter(m => m.role === 'user').at(-1);
               if (lastUserMessage) {
@@ -314,7 +314,7 @@ export function CharacterPopup({
                   color: '#666',
                   fontStyle: 'italic',
                 }}>
-                  (what are you waiting for?)
+                  what are you waiting for?
                 </div>
               );
             })()}

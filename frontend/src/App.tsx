@@ -472,7 +472,8 @@ export default function App() {
     setConfirmDialog({
       message: 'Are you sure you want to empty the Trash? This cannot be undone.',
       onConfirm: () => {
-        setTrash([]);
+        const manifesto = trash.find(item => item.id === 'manifesto');
+        setTrash(manifesto ? [manifesto] : []);
         setConfirmDialog(null);
       },
     });

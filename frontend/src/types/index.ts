@@ -39,8 +39,10 @@ export interface TrashItem {
   id: string;
   name: string;
   type: string;
+  content?: string;
   deletedAt?: number;
   timestamp?: number;
+  created_at?: number;
 }
 
 export interface ConfirmDialogProps {
