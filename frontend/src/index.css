@@ -5,6 +5,8 @@
   font-style: normal;
 }
 
+@import url('https://fonts.googleapis.com/css2?family=Borel&display=swap');
+
 @font-face {
   font-family: "Geneva";
   src: url("//db.onlinewebfonts.com/t/5ef60dc8370b330aa40e0c874bda45aa.woff2") format("woff2"),

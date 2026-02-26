@@ -3,9 +3,10 @@ import type { TrashItem } from '../../types/index.js';
 interface TrashWindowProps {
   trashItems?: TrashItem[];
   onEmptyTrash?: () => void;
+  onOpenItem?: (item: TrashItem) => void;
 }
 
-export function TrashWindow({ trashItems, onEmptyTrash }: TrashWindowProps) {
+export function TrashWindow({ trashItems, onEmptyTrash, onOpenItem }: TrashWindowProps) {
   return (
     <div className="trash-content">
       {trashItems && trashItems.length > 0 && (
@@ -28,7 +29,12 @@ export function TrashWindow({ trashItems, onEmptyTrash }: TrashWindowProps) {
       ) : (
         <div className="trash-grid">
           {trashItems.map(item => (
-            <div key={item.id} className="trash-item">
+            <div 
+              key={item.id} 
+              className="trash-item"
+              onClick={() => onOpenItem?.(item)}
+              style={{ cursor: item.id === 'manifesto' ? 'pointer' : 'default' }}
+            >
               <span className="trash-item-name">{item.name}</span>
               <span className="trash-item-type">{item.type}</span>
             </div>

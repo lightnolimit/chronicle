@@ -13,6 +13,7 @@ interface DocumentEditorProps {
   currentDoc: Document | null;
   onOpenWallet?: () => void;
   isWalletConnected?: boolean;
+  readOnly?: boolean;
 }
 
 export function DocumentEditor({
@@ -23,6 +24,7 @@ export function DocumentEditor({
   currentDoc,
   onOpenWallet,
   isWalletConnected,
+  readOnly = false,
 }: DocumentEditorProps) {
   const [content, setContent] = useState(currentDoc?.content || '');
   const [docName, setDocName] = useState(currentDoc?.name || 'Untitled');
@@ -160,8 +162,10 @@ export function DocumentEditor({
       <textarea
         className="editor-textarea"
         value={content}
-        onChange={(e) => setContent(e.target.value)}
+        onChange={(e) => !readOnly && setContent(e.target.value)}
         placeholder={docType === 'markdown' ? '# Start writing...\n\nYour thoughts here...' : '{\n  "key": "value"\n}'}
+        readOnly={readOnly}
+        style={readOnly ? { background: 'var(--bg-secondary)', cursor: 'default' } : undefined}
       />
       <div className="editor-footer">
         <span className="price-display">

@@ -11,6 +11,9 @@ interface CharacterPopupProps {
   activeWindow?: string | null;
   currentDocument?: { name: string; content: string; type: string } | null;
   onAiRequest?: (endpoint: string, body: object) => Promise<any>;
+  showTrashConfirm?: boolean;
+  onTrashConfirmYes?: () => void;
+  onTrashConfirmNo?: () => void;
 }
 
 interface PendingConfirmation {
@@ -29,6 +32,9 @@ export function CharacterPopup({
   activeWindow,
   currentDocument,
   onAiRequest,
+  showTrashConfirm,
+  onTrashConfirmYes,
+  onTrashConfirmNo,
 }: CharacterPopupProps) {
   const [internalVisible, setInternalVisible] = useState(true);
   const isVisible = controlledVisible !== undefined ? controlledVisible : internalVisible;
@@ -37,7 +43,7 @@ export function CharacterPopup({
     : setInternalVisible;
   
   const [isDragging, setIsDragging] = useState(false);
-  const [pos, setPos] = useState({ x: window.innerWidth - 510, y: window.innerHeight - 550 });
+  const [pos, setPos] = useState({ x: window.innerWidth - 610, y: window.innerHeight - 650 });
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   
   const [bubbleMessage, setBubbleMessage] = useState<string>('');
@@ -355,10 +361,10 @@ export function CharacterPopup({
           onComplete={dismissBubble}
           isDarkMode={isDarkMode}
           maxWidth={380}
-          showConfirm={!!pendingConfirmation}
-          showThinking={aiLoading && !pendingConfirmation && !activeMessage}
-          onYes={handleYesConfirm}
-          onNo={handleNoConfirm}
+          showConfirm={!!pendingConfirmation || showTrashConfirm}
+          showThinking={aiLoading && !pendingConfirmation && !activeMessage && !showTrashConfirm}
+          onYes={showTrashConfirm ? onTrashConfirmYes : handleYesConfirm}
+          onNo={showTrashConfirm ? onTrashConfirmNo : handleNoConfirm}
         />
       )}
     </div>

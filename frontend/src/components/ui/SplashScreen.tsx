@@ -26,7 +26,7 @@ export function SplashScreen({ onComplete, isDarkMode }: { onComplete: () => voi
         }}
       />
       <h1 style={{
-        fontFamily: 'ChicagoFLF, sans-serif',
+        fontFamily: 'Borel, cursive',
         fontSize: '48px',
         color: isDarkMode ? '#fff' : '#000',
         marginBottom: '10px',

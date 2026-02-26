@@ -334,6 +334,7 @@ export default function App() {
   const [showHidden, setShowHidden] = useState(false);
   const [characterMessage, setCharacterMessage] = useState<string>('');
   const [trash, setTrash] = useState<TrashItem[]>(loadTrash);
+  const [trashConfirmBubble, setTrashConfirmBubble] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState<{
     message: string;
     onConfirm: () => void;
@@ -469,19 +470,40 @@ export default function App() {
   };
 
   const handleEmptyTrash = () => {
-    setConfirmDialog({
-      message: 'Are you sure you want to empty the Trash? This cannot be undone.',
-      onConfirm: () => {
-        const manifesto = trash.find(item => item.id === 'manifesto');
-        setTrash(manifesto ? [manifesto] : []);
-        setConfirmDialog(null);
-      },
-    });
+    setTrashConfirmBubble(true);
+    setCharacterMessage('Are you sure you want to empty the Trash? This cannot be undone.');
+  };
+
+  const handleTrashConfirmYes = () => {
+    const manifesto = trash.find(item => item.id === 'manifesto');
+    setTrash(manifesto ? [manifesto] : []);
+    setTrashConfirmBubble(false);
+    setCharacterMessage('Trash emptied');
+  };
+
+  const handleTrashConfirmNo = () => {
+    setTrashConfirmBubble(false);
+    setCharacterMessage('Cancelled');
   };
 
   const handleOpenDocument = (doc: Document) => {
     setCurrentDocument(doc);
     toggleWindow('notepad');
+  };
+
+  const handleOpenTrashItem = (item: TrashItem) => {
+    if (item.id === 'manifesto' && item.content) {
+      setCurrentDocument({ 
+        id: 'manifesto',
+        name: item.name, 
+        content: item.content, 
+        type: 'markdown',
+        createdAt: item.created_at || Date.now(),
+        updatedAt: Date.now(),
+        readOnly: true 
+      });
+      toggleWindow('notepad');
+    }
   };
 
   const handleSubmit = async (content: string, type: string, name: string) => {
@@ -584,6 +606,9 @@ export default function App() {
           activeWindow={activeWindow}
           currentDocument={currentDocument}
           onAiRequest={(endpoint, body) => callAiApi(endpoint, body, address!, signTypedDataAsync, chainId)}
+          showTrashConfirm={trashConfirmBubble}
+          onTrashConfirmYes={handleTrashConfirmYes}
+          onTrashConfirmNo={handleTrashConfirmNo}
         />
       )}
       
@@ -628,6 +653,7 @@ export default function App() {
                 currentDoc={currentDocument}
                 onOpenWallet={handleOpenWallet}
                 isWalletConnected={!!address}
+                readOnly={currentDocument?.readOnly}
               />
             )}
             {window.id === 'documents' && (
@@ -641,7 +667,7 @@ export default function App() {
                 hiddenUploads={hiddenUploads}
               />
             )}
-            {window.id === 'trash' && <TrashWindow trashItems={trash} onEmptyTrash={handleEmptyTrash} />}
+            {window.id === 'trash' && <TrashWindow trashItems={trash} onEmptyTrash={handleEmptyTrash} onOpenItem={handleOpenTrashItem} />}
             {window.id === 'computer' && <ComputerWindow />}
             {window.id === 'paint' && (
               <PaintWindow 

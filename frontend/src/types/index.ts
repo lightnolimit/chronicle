@@ -24,6 +24,7 @@ export interface Document {
   type: 'markdown' | 'json';
   createdAt: number;
   updatedAt: number;
+  readOnly?: boolean;
 }
 
 export interface UploadedDoc {
