@@ -40,7 +40,6 @@ export function CharacterPopup({
   const [aiMessages, setAiMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>([]);
   const [aiInput, setAiInput] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
-  const [showChat, setShowChat] = useState(true);
   
   const [pendingConfirmation, setPendingConfirmation] = useState<PendingConfirmation | null>(null);
   const [displayPrice, setDisplayPrice] = useState(0.01);
@@ -224,20 +223,6 @@ export function CharacterPopup({
         className="character-popup-header"
         onMouseDown={handleMouseDown}
       >
-        <button 
-          onClick={() => setShowChat(!showChat)} 
-          style={{ 
-            background: 'none', 
-            border: 'none', 
-            cursor: 'pointer',
-            fontSize: '10px',
-            marginLeft: '8px',
-            color: showChat ? '#007bff' : '#888',
-          }}
-          title={showChat ? 'Hide AI Chat' : 'Show AI Chat'}
-        >
-          {showChat ? '◉' : '○'}
-        </button>
         <div className="window-bars">
           <hr /><hr /><hr /><hr /><hr /><hr />
         </div>
@@ -251,7 +236,6 @@ export function CharacterPopup({
           style={{ width: 360, height: 340 }}
         />
         
-        {showChat && (
         <div style={{ display: 'flex', justifyContent: 'center', marginTop: '8px', gap: '35px', padding: '0 8px 15px 8px' }}>
           <div style={{ 
             display: 'flex', 
@@ -339,7 +323,6 @@ export function CharacterPopup({
             </div>
           </div>
         </div>
-        )}
       </div>
       {(activeMessage || aiLoading) && (
         <MessageBubble 

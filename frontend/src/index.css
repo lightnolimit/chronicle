@@ -412,9 +412,10 @@ a:hover {
 .close-btn {
   position: absolute;
   left: 3%;
-  top: 1px;
+  top: 50%;
+  transform: translateY(-50%);
   border: 1px solid var(--border-color);
-  background: var(--bg-secondary);
+  background: #ffffff;
   width: 12px;
   height: 12px;
   cursor: pointer;
@@ -423,7 +424,8 @@ a:hover {
 .minimize-btn {
   position: absolute;
   right: 20px;
-  top: 1px;
+  top: 50%;
+  transform: translateY(-50%);
   border: 1px solid var(--border-color);
   background: var(--bg-secondary);
   width: 12px;
