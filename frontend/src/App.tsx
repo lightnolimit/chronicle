@@ -422,6 +422,10 @@ export default function App() {
     setWindows(ws => ws.map(w => w.id === id ? { ...w, width, height } : w));
   };
 
+  const minimizeWindow = (id: string) => {
+    setWindows(ws => ws.map(w => w.id === id ? { ...w, minimized: !w.minimized } : w));
+  };
+
   const handleSaveDocument = (name: string, content: string, type: 'markdown' | 'json') => {
     const existing = documents.find(d => d.name === name);
     if (existing) {
@@ -599,8 +603,6 @@ export default function App() {
       {!showSplash && (
         <CharacterPopup 
           isDarkMode={isDarkMode} 
-          visible={windows.find(w => w.id === 'character')?.visible ?? true}
-          onClose={() => closeWindow('character')}
           message={characterMessage}
           onMessageComplete={() => setCharacterMessage('')}
           activeWindow={activeWindow}
@@ -615,7 +617,7 @@ export default function App() {
       <main className="desktop-main">
         <div className="desktop-icons">
           <div className="desktop-icons-column">
-            {ICONS.filter(icon => icon.id !== 'agent').map(icon => (
+            {ICONS.map(icon => (
               <DesktopIcon
                 key={icon.id}
                 icon={icon.icon}
@@ -624,14 +626,6 @@ export default function App() {
               />
             ))}
           </div>
-          <div className="desktop-icons-column">
-            <DesktopIcon
-              key="agent"
-              icon="agent"
-              label="Agent"
-              onDoubleClick={() => toggleWindow('character')}
-            />
-          </div>
         </div>
 
         {windows.map(window => (
@@ -639,6 +633,7 @@ export default function App() {
             key={window.id}
             window={window}
             onClose={() => closeWindow(window.id)}
+            onMinimize={() => minimizeWindow(window.id)}
             onFocus={() => bringToFront(window.id)}
             onMove={(x, y) => moveWindow(window.id, x, y)}
             onResize={(w, h) => resizeWindow(window.id, w, h)}

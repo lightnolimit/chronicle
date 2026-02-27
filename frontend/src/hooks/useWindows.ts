@@ -53,8 +53,12 @@ export function useWindows() {
     setWindows(ws => ws.map(w => w.id === id ? { ...w, width, height } : w));
   }, []);
 
+  const minimizeWindow = useCallback((id: string) => {
+    setWindows(ws => ws.map(w => w.id === id ? { ...w, minimized: !w.minimized } : w));
+  }, []);
+
   const openWindow = useCallback((id: string) => {
-    setWindows(ws => ws.map(w => w.id === id ? { ...w, visible: true } : w));
+    setWindows(ws => ws.map(w => w.id === id ? { ...w, visible: true, minimized: false } : w));
     bringToFront(id);
   }, [bringToFront]);
 
@@ -69,6 +73,7 @@ export function useWindows() {
     closeWindow,
     moveWindow,
     resizeWindow,
+    minimizeWindow,
     openWindow,
   };
 }

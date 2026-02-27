@@ -4,8 +4,6 @@ import { MessageBubble } from './MessageBubble.js';
 
 interface CharacterPopupProps {
   isDarkMode: boolean;
-  visible?: boolean;
-  onClose?: () => void;
   message?: string;
   onMessageComplete?: () => void;
   activeWindow?: string | null;
@@ -25,8 +23,6 @@ interface PendingConfirmation {
 
 export function CharacterPopup({
   isDarkMode,
-  visible: controlledVisible,
-  onClose,
   message: externalMessage,
   onMessageComplete,
   activeWindow,
@@ -36,12 +32,6 @@ export function CharacterPopup({
   onTrashConfirmYes,
   onTrashConfirmNo,
 }: CharacterPopupProps) {
-  const [internalVisible, setInternalVisible] = useState(true);
-  const isVisible = controlledVisible !== undefined ? controlledVisible : internalVisible;
-  const setVisible = controlledVisible !== undefined 
-    ? (v: boolean) => { if (!v) onClose?.(); } 
-    : setInternalVisible;
-  
   const [isDragging, setIsDragging] = useState(false);
   const [pos, setPos] = useState({ x: window.innerWidth - 610, y: window.innerHeight - 650 });
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
@@ -220,8 +210,6 @@ export function CharacterPopup({
     };
   }, [isDragging, dragOffset]);
 
-  if (!isVisible) return null;
-
   return (
     <div 
       className="character-popup"
@@ -236,8 +224,6 @@ export function CharacterPopup({
         className="character-popup-header"
         onMouseDown={handleMouseDown}
       >
-        <button className="close-btn" onClick={() => setVisible(false)} />
-        <button className="minimize-btn" onClick={() => setVisible(false)} />
         <button 
           onClick={() => setShowChat(!showChat)} 
           style={{ 

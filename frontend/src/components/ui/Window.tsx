@@ -4,6 +4,7 @@ import type { WindowState } from '../../types/index.js';
 interface WindowProps {
   window: WindowState;
   onClose: () => void;
+  onMinimize: () => void;
   onFocus: () => void;
   onMove?: (x: number, y: number) => void;
   onResize?: (width: number, height: number) => void;
@@ -11,7 +12,7 @@ interface WindowProps {
   isActive: boolean;
 }
 
-export function Window({ window: win, onClose, onFocus, onMove, onResize, children, isActive }: WindowProps) {
+export function Window({ window: win, onClose, onMinimize, onFocus, onMove, onResize, children, isActive }: WindowProps) {
   const windowRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
@@ -74,7 +75,7 @@ export function Window({ window: win, onClose, onFocus, onMove, onResize, childr
   return (
     <div
       ref={windowRef}
-      className={`window ${isActive ? 'active' : ''} ${isDragging ? 'dragging' : ''}`}
+      className={`window ${isActive ? 'active' : ''} ${isDragging ? 'dragging' : ''} ${win.minimized ? 'minimized' : ''}`}
       style={{
         left: win.x,
         top: win.y,
@@ -88,16 +89,6 @@ export function Window({ window: win, onClose, onFocus, onMove, onResize, childr
         <button 
           className="close-btn" 
           onClick={(e) => { e.stopPropagation(); onClose(); }}
-          style={{
-            position: 'absolute',
-            left: '3%',
-            top: '1px',
-            border: '1px solid var(--black, black)',
-            background: 'white',
-            width: '12px',
-            height: '12px',
-            cursor: 'pointer',
-          }}
         />
         <div className="window-bars">
           <hr /><hr /><hr /><hr /><hr /><hr />
@@ -106,18 +97,10 @@ export function Window({ window: win, onClose, onFocus, onMove, onResize, childr
         {win.resizable !== false && (
           <button 
             className="minimize-btn"
-            onClick={(e) => { e.stopPropagation(); onClose(); }}
-            style={{
-              position: 'absolute',
-              right: '20px',
-              top: '1px',
-              border: '1px solid var(--black, black)',
-              background: 'white',
-              width: '12px',
-              height: '12px',
-              cursor: 'pointer',
-            }}
-          />
+            onClick={(e) => { e.stopPropagation(); onMinimize(); }}
+          >
+            <div className="expand-rect" />
+          </button>
         )}
       </div>
       <div className="window-body">

@@ -409,32 +409,46 @@ a:hover {
   z-index: 1;
 }
 
-.minimize-btn,
 .close-btn {
+  position: absolute;
+  left: 3%;
+  top: 1px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
   width: 12px;
   height: 12px;
-  border-radius: 50%;
   cursor: pointer;
-  position: relative;
-  z-index: 1;
-}
-
-.close-btn {
-  background: var(--close-btn);
-  border: 2px solid var(--border-color);
-}
-
-.close-btn:hover {
-  background: red;
 }
 
 .minimize-btn {
-  background: #ffcc00;
-  border: 2px solid var(--border-color);
+  position: absolute;
+  right: 20px;
+  top: 1px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  width: 12px;
+  height: 12px;
+  cursor: pointer;
 }
 
-.minimize-btn:hover {
-  background: #e6b800;
+.expand-rect {
+  position: absolute;
+  background-color: var(--bg-secondary);
+  top: 0;
+  left: 0;
+  border-width: 0 1px 1px 0;
+  border-style: solid;
+  border-color: var(--border-color);
+  width: 50%;
+  height: 50%;
+}
+
+.window.minimized {
+  animation: resize 0.8s forwards;
+}
+
+@keyframes resize {
+  100% { transform: scale(0.4); }
 }
 
 .resize-btn {

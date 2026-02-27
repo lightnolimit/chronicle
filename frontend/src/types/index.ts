@@ -8,12 +8,13 @@ export interface WindowState {
   visible: boolean;
   zIndex: number;
   resizable?: boolean;
+  minimized?: boolean;
 }
 
 export interface DesktopIcon {
   id: string;
   label: string;
-  icon: 'computer' | 'notepad' | 'trash' | 'documents' | 'paint' | 'docs' | 'video' | 'agent';
+  icon: 'computer' | 'notepad' | 'trash' | 'documents' | 'paint' | 'docs' | 'video';
   windowId: string;
 }
 
