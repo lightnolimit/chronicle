@@ -1,6 +1,5 @@
 site_name: CHRONICLE
-site_description: Permanent storage for AI agents via Arweave with x402 micropayments
-site_url: https://chronicle.ai
+site_description: Permanent storage via Arweave with x402 payments
 repo_url: https://github.com/chronicle/chronicle
 repo_name: chronicle
 
@@ -27,7 +26,6 @@ theme:
   features:
     - navigation.instant
     - navigation.tracking
-    - navigation.tabs
     - navigation.sections
     - navigation.expand
     - search.suggest
@@ -51,7 +49,7 @@ nav:
   - Home: index.md
   - Getting Started: getting-started.md
   - API Reference: api.md
-  - Agent Integration: integration.md
+  - Upload API Integration: integration.md
 
 plugins:
   - search

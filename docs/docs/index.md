@@ -1,44 +1,22 @@
 # CHRONICLE
 
-*Permanent memory for AI agents and humans*
+Permanent storage for agent and human data on Arweave via Turbo, paid with x402 (USDC on Base).
 
-CHRONICLE is an AI agent that helps you store data permanently on Arweave. It remembers everything - forever.
+## What You Can Store
 
-## What is CHRONICLE?
+- Notes and markdown
+- Images
+- JSON data
+- Encrypted payloads (client-side)
 
-CHRONICLE is your archival companion. It takes your thoughts, memories, images, and data, and stores them permanently on Arweave - the decentralized storage network where data lasts forever.
+## How It Works
 
-### Why CHRONICLE?
+1. Connect a wallet.
+2. Create content in the app.
+3. Upload to the permaweb with a small USDC payment.
 
-- **Permanent** - Once stored, your data exists forever on Arweave
-- **Private** - Optional encryption keeps your secrets safe
-- **Simple** - Connect wallet, upload, done
-- **Agent-friendly** - Built for AI agents to persist their memories
+## Next Steps
 
-## What Can You Store?
-
-- **Journal entries** - Your thoughts, preserved forever
-- **Images** - Photos and artwork that never disappear
-- **JSON data** - Structured data for AI agents
-- **Encrypted content** - Private data with your own key
-
-## Quick Start
-
-```bash
-# Visit
-https://chronicle.ai
-
-# Connect wallet
-# Upload your first thought
-# It's there forever
-```
-
-## Links
-
-- [Getting Started](getting-started.md) - Upload your first memory
-- [API Reference](api.md) - For developers and agents
-- [Integration](integration.md) - Connect your AI agent
-
----
-
-*Powered by Arweave + Turbo | Built on Base*
+- [Getting Started](getting-started.md)
+- [API Reference](api.md)
+- [Upload API Integration](integration.md)

@@ -1,6 +1,5 @@
 site_name: CHRONICLE Dev Docs
 site_description: Internal developer documentation for CHRONICLE
-site_url: https://dev.chronicle.ai
 
 theme:
   name: material
@@ -38,6 +37,7 @@ nav:
   - Architecture: architecture.md
   - Pricing: pricing.md
   - x402 Integration: x402.md
+  - AI Endpoints: ai.md
   - Virtuals ACP: acp.md
 
 plugins:

@@ -3,71 +3,50 @@
 ## System Overview
 
 ```
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│   AI Agent      │────▶│   CHRONICLE     │────▶│     Turbo       │
-│   (Client)      │     │   Agent         │     │   (Arweave)     │
-└─────────────────┘     └─────────────────┘     └─────────────────┘
-        │                       │                       │
-        │                       │                       │
-        ▼                       ▼                       ▼
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│   x402 Payment  │     │    SQLite       │     │    Arweave      │
-│   (USDC/Base)   │     │   (History)     │     │   (Permanent)   │
-└─────────────────┘     └─────────────────┘     └─────────────────┘
+Client (Web App)
+  │
+  ├─ x402 payment flow
+  │
+  ▼
+Agent API (Express)
+  ├─ /api/upload
+  ├─ /api/uploads
+  ├─ /api/uploads/export
+  └─ /api/ai/* (mainnet only)
+  │
+  ▼
+Turbo (Arweave)
+  │
+  ▼
+Arweave
 ```
 
-## Components
+## Key Components
 
-### 1. API Server (Express)
+### API Server
 
-Located in `agent/src/server.ts`
+- `agent/src/server.ts`
+- x402 middleware with PayAI facilitator
+- Upload and AI endpoints
 
-```typescript
-// Endpoints
-POST /upload/image    // Upload image
-POST /upload/markdown // Upload markdown
-POST /upload/json     // Upload JSON
-GET  /uploads/:wallet // Get user uploads
-GET  /uploads/export  // Export history
-```
+### Upload Service
 
-### 2. Upload Service
+- `agent/src/services/upload.ts`
+- Uses Turbo SDK with x402 funding
+- Adds metadata tags (content type, encryption tags)
 
-Located in `agent/src/services/upload.ts`
+### Database
 
-- Handles Turbo upload API calls
-- Tags data with content type and metadata
-- Supports optional encryption
+- `agent/src/services/database.ts`
+- SQLite storage of upload history
 
-### 3. Database Service
+### Pricing
 
-Located in `agent/src/services/database.ts`
+- `agent/src/services/pricing.ts` (Turbo pricing + 10% markup, cached)
+- `agent/src/server.ts` (fixed $0.01 x402 price for uploads; UI price in frontend)
 
-- SQLite for local development
-- Tracks upload history per wallet
-- Supports JSON/CSV export
+### Frontend
 
-### 4. Encryption Service
-
-Located in `agent/src/services/encryption.ts`
-
-- AES-256-GCM encryption
-- Client-side encryption recommended
-- IV stored in Arweave tags
-
-## Data Flow
-
-1. Client connects wallet (wagmi)
-2. Client prepares data (optionally encrypts)
-3. Client initiates upload request
-4. x402 payment middleware validates payment
-5. Agent uploads to Turbo
-6. Agent records to SQLite
-7. Agent returns Arweave transaction ID
-
-## Security Considerations
-
-- Never log private keys
-- Validate all input data
-- Rate limit by wallet address
-- Use environment variables for secrets
+- `frontend/src/App.tsx`
+- `frontend/src/components/windows/*`
+- x402 payment signing via wagmi `signTypedData`

@@ -1,45 +1,21 @@
 # CHRONICLE Developer Documentation
 
-Internal documentation for CHRONICLE team. Not for public distribution.
+Internal documentation for CHRONICLE. This is not intended for public distribution.
 
 ## Overview
 
-CHRONICLE is a permanent storage service for AI agents built on:
-
-- **Arweave** - Permanent decentralized storage
-- **Turbo** - Upload service with x402 payment support
-- **Base** - Layer 2 for USDC payments
-- **Virtuals Protocol** - ACP integration for agent-to-agent payments
-
-## Repositories
-
-```
-chronicle/
-├── agent/           # Backend agent
-├── frontend/        # React frontend
-├── docs/            # Public docs
-└── dev-docs/        # This (internal)
-```
-
-## Key Components
-
-### Agent (agent)
+CHRONICLE provides permanent storage on Arweave via Turbo and x402 (USDC on Base). It includes:
 
 - Express API server with x402 payment middleware
-- SQLite database for upload history
-- Turbo upload service integration
-- ACP offering handlers
+- Turbo upload service
+- SQLite history tracking
+- Optional ACP offering
+- AI generation endpoints (mainnet + CHUTES_API_KEY)
 
-### Frontend (frontend)
+## Start Here
 
-- React + Vite + Wagmi
-- Wallet connect (MetaMask, Phantom)
-- Upload panel with encryption support
-- MacOS-classic aesthetic design
-
-## Next Steps
-
-- [Architecture](architecture.md) - System design
-- [Pricing](pricing.md) - Cost structure and markup
-- [x402 Integration](x402.md) - Payment protocol
-- [Virtuals ACP](acp.md) - Agent communication
+- [Architecture](architecture.md)
+- [Pricing](pricing.md)
+- [x402 Integration](x402.md)
+- [AI Endpoints](ai.md)
+- [Virtuals ACP](acp.md)

@@ -1,171 +1,83 @@
 # API Reference
 
-## Base URL
-
-```
-https://api.chronicle.ai
-```
-
-For local development: `http://localhost:3001`
+Base URL (local dev): `http://localhost:3001`
 
 ## Authentication
 
-Uploads require wallet authentication. The API uses your wallet signature to verify identity.
+All endpoints expect an Authorization header in this format:
 
-## Endpoints
-
-### Upload Image
-
-Store an image permanently.
-
-```http
-POST /upload/image
+```
+Authorization: Bearer <walletAddress>:sig
 ```
 
-**Request Body:**
+## Payments (x402)
+
+On the first request, the server may return `402 Payment Required` with a `payment-required` header. Clients must respond with a `PAYMENT-SIGNATURE` header containing a base64-encoded JSON payload for EIP-712 `TransferWithAuthorization`.
+
+## POST /api/upload
+
+Upload data to Arweave via Turbo.
+
+**Request**
 
 ```json
 {
-  "data": "base64-encoded-image",
+  "data": "<content>",
+  "type": "markdown" | "image" | "json",
+  "name": "optional filename",
   "encrypted": false
 }
 ```
 
-**Response:**
+**Response**
 
 ```json
 {
-  "id": "abc123...",
-  "url": "https://arweave.net/abc123...",
-  "type": "image",
-  "encrypted": false,
-  "timestamp": 1708502400000
+  "success": true,
+  "id": "<arweaveId>",
+  "url": "https://arweave.net/<arweaveId>",
+  "priceUsd": 0.01
 }
 ```
 
----
+## GET /api/uploads
 
-### Upload Markdown
+Returns a paginated list of uploads for the authenticated wallet.
 
-Store text or markdown content.
+**Query params**
 
-```http
-POST /upload/markdown
-```
+- `limit` (default 50, max 100)
+- `offset` (default 0)
 
-**Request Body:**
-
-```json
-{
-  "data": "# My Journal\n\nToday I...",
-  "encrypted": false
-}
-```
-
-**Response:**
-
-```json
-{
-  "id": "def456...",
-  "url": "https://arweave.net/def456...",
-  "type": "markdown",
-  "encrypted": false,
-  "timestamp": 1708502400000
-}
-```
-
----
-
-### Upload JSON
-
-Store structured JSON data.
-
-```http
-POST /upload/json
-```
-
-**Request Body:**
-
-```json
-{
-  "data": "{\"memory\": \"important thought\", \"timestamp\": 123}",
-  "encrypted": false
-}
-```
-
-**Response:**
-
-```json
-{
-  "id": "ghi789...",
-  "url": "https://arweave.net/ghi789...",
-  "type": "json",
-  "encrypted": false,
-  "timestamp": 1708502400000
-}
-```
-
----
-
-### Get Uploads
-
-Retrieve your upload history.
-
-```http
-GET /uploads/:walletAddress
-```
-
-**Response:**
+**Response**
 
 ```json
 {
   "uploads": [
     {
-      "id": "abc123...",
-      "url": "https://arweave.net/abc123...",
+      "id": "<arweaveId>",
+      "url": "https://arweave.net/<arweaveId>",
       "type": "markdown",
       "encrypted": false,
-      "sizeBytes": 1024,
-      "timestamp": 1708502400000
+      "size_bytes": 1024,
+      "cost_usd": 0.01,
+      "created_at": "2026-02-27 10:00:00"
     }
   ],
-  "total": 1
+  "total": 1,
+  "limit": 50,
+  "offset": 0
 }
 ```
 
----
+## GET /api/uploads/export
 
-### Export History
+Export upload history.
 
-Download your upload history.
+**Query params**
 
-```http
-GET /uploads/:walletAddress/export/:format
-```
+- `format`: `json` (default) or `csv`
 
-**Formats:** `json`, `csv`
+**Response**
 
-## Encryption
-
-To encrypt your data before upload:
-
-1. Use AES-256-GCM encryption
-2. Include the base64-encoded IV in `cipherIv`
-3. Set `encrypted: true`
-4. Keep your encryption key safe - CHRONICLE can't decrypt without it
-
-## Error Responses
-
-```json
-{
-  "error": "Payment required",
-  "message": "Please ensure you have sufficient USDC on Base"
-}
-```
-
-## Rate Limits
-
-- 100 requests per minute per wallet
-- 10MB maximum upload size
-
-Need higher limits? [Contact us](mailto:hello@chronicle.ai)
+- `application/json` or `text/csv` with `Content-Disposition: attachment`

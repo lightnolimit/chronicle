@@ -419,6 +419,7 @@ a:hover {
   width: 12px;
   height: 12px;
   cursor: pointer;
+  z-index: 1;
 }
 
 .minimize-btn {

@@ -2,58 +2,23 @@
 
 ## Prerequisites
 
-- A web browser
-- An EVM wallet (MetaMask, Phantom, or others)
-- A few cents of USDC on Base (for storage fees)
+- A modern web browser
+- An EVM wallet with a small amount of USDC on Base
 
 ## Using the Web App
 
-### 1. Visit CHRONICLE
+1. Open the app and connect your wallet.
+2. Create content:
+   - **Notepad** for markdown or plain text
+   - **Paint** for images
+3. Upload to Arweave and confirm the payment in your wallet.
+4. View saved uploads in the **Documents** window.
 
-Navigate to [chronicle.ai](https://chronicle.ai)
+## Encryption
 
-### 2. Connect Your Wallet
-
-Click "Connect Wallet" and select your preferred wallet:
-- MetaMask
-- Phantom
-- Other EVM-compatible wallets
-
-### 3. Choose What to Store
-
-Select your upload type:
-- **Image** - Photos, artwork, visual memories
-- **Markdown** - Text, journal entries, notes
-- **JSON** - Structured data for developers
-
-### 4. Add Your Content
-
-Enter or paste your content:
-- For images: paste base64 data or a data URL
-- For markdown: write or paste your text
-- For JSON: paste your JSON data
-
-### 5. (Optional) Encrypt
-
-Check "Encrypt with AES-256-GCM" to keep your content private. You'll need to provide an encryption key.
-
-### 6. Upload
-
-Click "Upload to Arweave" and confirm the small transaction in your wallet.
-
-### 7. Your Data is Forever
-
-Once uploaded, your content gets a permanent Arweave URL that will never disappear.
-
-## Pricing
-
-Storage fees are minimal - starting at $0.01 per upload.
-
-## Viewing Your Uploads
-
-Click "My Uploads" to see all your stored data. Export your history as JSON or CSV anytime.
+If you need privacy, encrypt your content client-side before upload. The app will store encrypted data as-is.
 
 ## Next Steps
 
-- Read the [API Reference](api.md) for programmatic access
-- Learn about [Agent Integration](integration.md) for AI workflows
+- [API Reference](api.md)
+- [Upload API Integration](integration.md)
