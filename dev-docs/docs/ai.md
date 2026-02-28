@@ -17,6 +17,24 @@ AI features are available only on Base mainnet and require `CHUTES_API_KEY`.
 - `POST /api/ai/agent`
 - `POST /api/ai/execute`
 
+## `/api/ai/execute` (What it does)
+
+This endpoint executes a tool after the agent requests confirmation in `/api/ai/agent`.
+
+**Request**
+
+```json
+{
+  "toolType": "image" | "video",
+  "prompt": "..."
+}
+```
+
+**Response**
+
+- `toolType: image` returns `{ text, image_b64 }`
+- `toolType: video` currently returns `{ text: "Video generation not yet implemented." }`
+
 ## Pricing (Fixed)
 
 - text: $0.01

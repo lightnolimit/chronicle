@@ -1,26 +1,33 @@
 # Pricing
 
-## Upload Pricing (Current Behavior)
+## Upload Pricing (Single Source of Truth)
 
-Two pricing paths exist today:
+All upload pricing now comes from `agent/src/services/pricing.ts` and is applied consistently across:
 
-1. **x402 payment requirement** (server middleware)
-   - `/api/upload` uses a fixed price of **$0.01**.
+- x402 payment requirement for `POST /api/upload`
+- `/api/price` endpoint
+- UI price display (frontend calls `/api/price`)
+- Turbo `maxMUSDCAmount` for uploads
 
-2. **UI price estimate** (frontend)
-   - `BASE_PRICE_USD = 0.01`
-   - `TURBO_COST_PER_MIB = 0.01`
-   - `MARKUP_MULTIPLIER = 1.25`
+### Pricing Logic
 
-   ```ts
-   price = max(0.01, sizeMiB * 0.01 * 1.25)
-   ```
+1. Fetch Turbo price from `https://ardrive.net/price/:bytes`
+2. Convert to USD (winston → USD)
+3. Apply **10% markup**
+4. Enforce minimum **$0.01**
 
-3. **Turbo max payment** (upload service)
-   - `agent/src/services/pricing.ts` fetches Turbo price and applies **10% markup**
-   - Used to set `maxMUSDCAmount` for Turbo uploads
+```ts
+priceUsd = max(0.01, turboCostUsd * 1.10)
+```
 
-These are currently inconsistent by design and should be reconciled later if we want a single source of truth.
+### Fallback
+
+If the Turbo pricing API fails, a fallback estimate is used:
+
+```ts
+turboCostUsd = (bytes / 1024) * 0.001
+priceUsd = max(0.01, turboCostUsd * 1.10)
+```
 
 ## AI Pricing
 

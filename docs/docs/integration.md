@@ -36,6 +36,15 @@ Authorization: Bearer <walletAddress>:sig
 3. Build and sign an EIP-712 TransferWithAuthorization payload.
 4. Retry the request with `PAYMENT-SIGNATURE` header containing the base64 JSON payload.
 
+## Pricing
+
+Upload pricing is computed by the server based on payload size (Turbo price + markup, $0.01 minimum).
+To estimate price before upload, call:
+
+```
+GET /api/price?size=<bytes>
+```
+
 ## Response
 
 ```json

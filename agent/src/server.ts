@@ -7,6 +7,7 @@ import { facilitator } from '@payai/facilitator';
 import { HTTPFacilitatorClient } from '@x402/core/server';
 import { getUserUploads, getUserUploadCount, exportUploadsJson, exportUploadsCsv, recordUpload } from '../src/services/database.js';
 import { UploadService } from '../src/services/upload.js';
+import { pricingService } from '../src/services/pricing.js';
 import { generateText, generateImage, editImage, generateVideo } from '../src/handlers/ai_generate.js';
 import { handleAgentChat, executeTool } from '../src/services/agent.js';
 
@@ -28,6 +29,33 @@ const facilitatorClient = new HTTPFacilitatorClient(facilitator);
 const x402Server = new x402ResourceServer(facilitatorClient);
 x402Server.register(networkChainId, new ExactEvmScheme());
 
+function getDataSizeBytes(data: unknown): number {
+  if (typeof data === 'string') {
+    return new TextEncoder().encode(data).length;
+  }
+
+  if (data instanceof Uint8Array) {
+    return data.length;
+  }
+
+  if (data && typeof data === 'object') {
+    try {
+      return new TextEncoder().encode(JSON.stringify(data)).length;
+    } catch {
+      return 0;
+    }
+  }
+
+  return 0;
+}
+
+async function getUploadPriceUsdFromBody(body: unknown): Promise<number> {
+  const payload = body as { data?: unknown } | null;
+  const sizeBytes = getDataSizeBytes(payload?.data);
+  const pricing = await pricingService.getPrice(sizeBytes);
+  return pricing.userPriceUsd;
+}
+
 app.use(
   paymentMiddleware(
     {
@@ -35,7 +63,10 @@ app.use(
         accepts: [
           {
             scheme: 'exact',
-            price: '$0.01',
+            price: async (context) => {
+              const priceUsd = await getUploadPriceUsdFromBody(context.adapter.getBody());
+              return `$${priceUsd.toFixed(2)}`;
+            },
             network: networkChainId,
             payTo: EVM_ADDRESS,
           },
@@ -179,8 +210,9 @@ app.post('/api/upload', async (req, res) => {
       ],
     });
 
-    const sizeBytes = new TextEncoder().encode(data).length;
-    const priceUsd = calculatePrice(sizeBytes);
+    const sizeBytes = getDataSizeBytes(data);
+    const pricing = await pricingService.getPrice(sizeBytes);
+    const priceUsd = pricing.userPriceUsd;
 
     recordUpload(
       walletAddress,
@@ -204,21 +236,21 @@ app.post('/api/upload', async (req, res) => {
   }
 });
 
-const BASE_PRICE_USD = 0.01;
-const TURBO_COST_PER_MIB = 0.01;
-const MARKUP_MULTIPLIER = 1.25;
-
-function calculatePrice(sizeBytes: number): number {
-  const sizeMiB = sizeBytes / (1024 * 1024);
-  const userPrice = Math.max(BASE_PRICE_USD, sizeMiB * TURBO_COST_PER_MIB * MARKUP_MULTIPLIER);
-  return Math.round(userPrice * 100) / 100;
-}
-
-app.get('/api/price', (req, res) => {
+app.get('/api/price', async (req, res) => {
   const { size } = req.query;
   const sizeBytes = parseInt(size as string) || 0;
-  const priceUsd = calculatePrice(sizeBytes);
-  res.json({ priceUsd, sizeBytes });
+  try {
+    const pricing = await pricingService.getPrice(sizeBytes);
+    res.json({
+      priceUsd: pricing.userPriceUsd,
+      turboCostUsd: pricing.turboCostUsd,
+      markupPercent: pricing.markupPercent,
+      sizeBytes,
+    });
+  } catch (error) {
+    console.error('Price calculation error:', error);
+    res.status(500).json({ error: 'PRICE_FAILED', message: 'Price calculation failed' });
+  }
 });
 
 app.get('/api/ai/status', (req, res) => {

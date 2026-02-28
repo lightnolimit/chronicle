@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAccount } from 'wagmi';
 import axios from 'axios';
 import type { Document } from '../../types/index.js';
 import { API_URL } from '../../utils/constants.js';
-import { calculatePrice, formatPrice } from '../../utils/pricing.js';
+import { fetchPrice, formatPrice } from '../../utils/pricing.js';
 
 interface DocumentEditorProps {
   onSubmit: (content: string, type: string, name: string) => Promise<void>;
@@ -35,6 +35,7 @@ export function DocumentEditor({
   const [aiMode, setAiMode] = useState<'none' | 'summarize' | 'continue'>('none');
   const [aiLoading, setAiLoading] = useState(false);
   const { address } = useAccount();
+  const priceRequestId = useRef(0);
 
   useEffect(() => {
     if (currentDoc) {
@@ -69,14 +70,19 @@ export function DocumentEditor({
   };
 
   useEffect(() => {
-    const timeoutId = setTimeout(() => {
+    const timeoutId = setTimeout(async () => {
       const sizeBytes = new TextEncoder().encode(content).length;
+      const requestId = ++priceRequestId.current;
+
       if (sizeBytes === 0) {
         setPrice(0);
         return;
       }
-      const calculatedPrice = calculatePrice(sizeBytes);
-      setPrice(calculatedPrice);
+
+      const nextPrice = await fetchPrice(sizeBytes);
+      if (priceRequestId.current === requestId) {
+        setPrice(nextPrice);
+      }
     }, 150);
 
     return () => clearTimeout(timeoutId);

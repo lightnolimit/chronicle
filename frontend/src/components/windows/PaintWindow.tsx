@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { calculatePrice, formatPrice } from '../../utils/pricing';
+import { fetchPrice, formatPrice } from '../../utils/pricing';
 
 interface PaintWindowProps {
   onSubmit: (content: string, type: string, name: string) => Promise<void>;
@@ -22,18 +22,22 @@ export function PaintWindow({ onSubmit, onOpenWallet, isWalletConnected, isDarkM
   const [price, setPrice] = useState<number | null>(null);
   const lineStartRef = useRef<{ x: number; y: number } | null>(null);
   const snapshotRef = useRef<ImageData | null>(null);
+  const priceRequestId = useRef(0);
 
-  const calculatePriceFn = useCallback(() => {
+  const calculatePriceFn = useCallback(async () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const dataUrl = canvas.toDataURL('image/png');
     const sizeBytes = new TextEncoder().encode(dataUrl).length;
+    const requestId = ++priceRequestId.current;
     if (sizeBytes === 0) {
       setPrice(0);
       return;
     }
-    const calculatedPrice = calculatePrice(sizeBytes);
-    setPrice(calculatedPrice);
+    const nextPrice = await fetchPrice(sizeBytes);
+    if (priceRequestId.current === requestId) {
+      setPrice(nextPrice);
+    }
   }, []);
 
   useEffect(() => {
@@ -121,6 +125,7 @@ export function PaintWindow({ onSubmit, onOpenWallet, isWalletConnected, isDarkM
     setIsDrawing(false);
     lineStartRef.current = null;
     snapshotRef.current = null;
+    calculatePriceFn();
   };
 
   const clearCanvas = () => {
@@ -130,6 +135,7 @@ export function PaintWindow({ onSubmit, onOpenWallet, isWalletConnected, isDarkM
     if (!ctx) return;
     ctx.fillStyle = isDarkMode ? '#2a2a2a' : '#ffffff';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+    calculatePriceFn();
   };
 
   const handleSubmit = async () => {

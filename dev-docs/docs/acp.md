@@ -36,8 +36,3 @@ See `agent/offerings/storage/`:
   }
 }
 ```
-
-## Token Roadmap (Planned)
-
-- $CHRONICLE token for premium features and governance
-- Token-gated features are not implemented yet

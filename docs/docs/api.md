@@ -40,6 +40,29 @@ Upload data to Arweave via Turbo.
 }
 ```
 
+**Pricing**
+
+The server computes price based on payload size (Turbo price + markup, $0.01 minimum).
+
+## GET /api/price
+
+Return a price estimate for a given size in bytes.
+
+**Query params**
+
+- `size` (bytes)
+
+**Response**
+
+```json
+{
+  "priceUsd": 0.01,
+  "turboCostUsd": 0.009,
+  "markupPercent": 10,
+  "sizeBytes": 1024
+}
+```
+
 ## GET /api/uploads
 
 Returns a paginated list of uploads for the authenticated wallet.
