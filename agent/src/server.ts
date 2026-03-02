@@ -64,7 +64,10 @@ app.use(
           {
             scheme: 'exact',
             price: async (context) => {
-              const priceUsd = await getUploadPriceUsdFromBody(context.adapter.getBody());
+              const requestBody = typeof context.adapter.getBody === 'function'
+                ? context.adapter.getBody()
+                : undefined;
+              const priceUsd = await getUploadPriceUsdFromBody(requestBody);
               return `$${priceUsd.toFixed(2)}`;
             },
             network: networkChainId,

@@ -1,0 +1,18 @@
+services:
+  agent:
+    image: phantasybot/chronicle-agent:latest
+    environment:
+      EVM_PRIVATE_KEY: ${EVM_PRIVATE_KEY}
+      EVM_ADDRESS: ${EVM_ADDRESS}
+      NETWORK: ${NETWORK:-base}
+      PORT: 3001
+      CHUTES_API_KEY: ${CHUTES_API_KEY}
+    ports:
+      - "3001:3001"
+
+  frontend:
+    image: phantasybot/chronicle-frontend:latest
+    depends_on:
+      - agent
+    ports:
+      - "80:80"

@@ -1,0 +1,20 @@
+services:
+  agent:
+    build:
+      context: ./agent
+    environment:
+      EVM_PRIVATE_KEY: ${EVM_PRIVATE_KEY}
+      EVM_ADDRESS: ${EVM_ADDRESS}
+      NETWORK: ${NETWORK:-base}
+      PORT: 3001
+      CHUTES_API_KEY: ${CHUTES_API_KEY}
+    ports:
+      - "3001:3001"
+
+  frontend:
+    build:
+      context: ./frontend
+    depends_on:
+      - agent
+    ports:
+      - "8080:80"
