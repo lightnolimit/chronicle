@@ -14,6 +14,7 @@ CHRONICLE provides permanent storage on Arweave via Turbo and x402 (USDC on Base
 
 ## Start Here
 
+- [Environment](environment.md)
 - [Architecture](architecture.md)
 - [Pricing](pricing.md)
 - [x402 Integration](x402.md)

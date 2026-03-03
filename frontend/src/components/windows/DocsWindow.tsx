@@ -36,6 +36,19 @@ export function DocsWindow() {
             Built with ❤️ using Arweave, Turbo, Base, Chutes.ai, and x402.
           </p>
         </div>
+
+        <div className="docs-section">
+          <h2 className="docs-heading">Payments & Security</h2>
+          <p className="docs-text">
+            Payments are processed via x402 protocol in USDC on Base.
+          </p>
+          <p className="docs-text" style={{ fontSize: '11px', color: '#666', marginTop: '8px', lineHeight: '1.5' }}>
+            <strong>Note:</strong> When making your first payment, MetaMask may show a warning 
+            about an "untrusted EOA". This is normal - our payment address is the agent's 
+            secure wallet used to pay for Arweave storage and AI generation. We're working on 
+            upgrading to a smart contract to eliminate this warning in the future.
+          </p>
+        </div>
       </div>
     </div>
   );

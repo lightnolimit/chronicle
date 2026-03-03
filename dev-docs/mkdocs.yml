@@ -34,7 +34,10 @@ markdown_extensions:
 
 nav:
   - Home: index.md
+  - Environment: environment.md
   - Architecture: architecture.md
+  - Deployment: deployment.md
+  - Roadmap: roadmap.md
   - Pricing: pricing.md
   - x402 Integration: x402.md
   - AI Endpoints: ai.md

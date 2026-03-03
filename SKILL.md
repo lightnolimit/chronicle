@@ -1,8 +1,8 @@
-# Chronicle Phala Deployment Guide
+# Phala Deployment Guide
 
 ## Overview
 
-This guide documents how to deploy Chronicle (an AI agent with x402 payments) to Phala Cloud with Docker Hub images.
+This guide documents how to deploy to Phala Cloud with Docker Hub images.
 
 ## Architecture
 
@@ -135,18 +135,150 @@ CMD ["node", "dist/src/server.js"]
 
 ## DNS & Custom Domain
 
-### Set up Cloudflare DNS
+### Option 1: Cloudflare Worker (Recommended for API + Frontend)
+
+This is the recommended approach when you need both a frontend and API with custom domains.
+
+#### Step 1: Create Worker Directory
 
 ```bash
-# Get Phala CVM URL pattern
-# https://<app_id>.dstack-pha-prod5.phala.network/
+mkdir -p workers/api-proxy/src
+```
 
-# Create A record (if not using Cloudflare Access)
+#### Step 2: Create wrangler.toml
+
+```toml
+name = "chronicle-api-proxy"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+
+[env.production]
+routes = [
+  { pattern = "api.chronicle.sh/*", zone_name = "chronicle.sh" },
+  { pattern = "app.chronicle.sh/*", zone_name = "chronicle.sh" },
+]
+
+[env.production.vars]
+AGENT_URL = "https://<app_id>-3001.dstack-pha-prod5.phala.network"
+FRONTEND_URL = "https://<app_id>.dstack-pha-prod5.phala.network"
+```
+
+#### Step 3: Create src/index.ts
+
+```typescript
+export interface Env {
+  AGENT_URL: string;
+  FRONTEND_URL: string;
+}
+
+export default {
+  async fetch(request: Request, env: Env): Promise<Response> {
+    const url = new URL(request.url);
+    const hostname = url.hostname;
+
+    let targetUrl: string;
+
+    if (hostname === "api.chronicle.sh") {
+      targetUrl = `${env.AGENT_URL}${url.pathname}${url.search}`;
+    } else if (hostname === "app.chronicle.sh") {
+      targetUrl = `${env.FRONTEND_URL}${url.pathname}${url.search}`;
+    } else {
+      return new Response("Not Found", { status: 404 });
+    }
+
+    const headers = new Headers(request.headers);
+    headers.set("Host", url.hostname);
+    headers.delete("cf-connecting-ip");
+    headers.delete("x-forwarded-for");
+    headers.delete("x-real-ip");
+
+    const proxyRequest = new Request(targetUrl, {
+      method: request.method,
+      headers: headers,
+      body: request.body,
+      redirect: "follow",
+    });
+
+    try {
+      const response = await fetch(proxyRequest);
+      
+      const responseHeaders = new Headers(response.headers);
+      responseHeaders.set("Access-Control-Allow-Origin", "*");
+      responseHeaders.delete("cf-ray");
+      responseHeaders.delete("x-served-by");
+      responseHeaders.delete("x-cache");
+
+      return new Response(response.body, {
+        status: response.status,
+        statusText: response.statusText,
+        headers: responseHeaders,
+      });
+    } catch (error) {
+      return new Response(`Proxy error: ${error}`, { status: 502 });
+    }
+  },
+};
+```
+
+#### Step 4: Deploy Worker
+
+```bash
+# Get your Cloudflare API token from .env.phala
+CLOUDFLARE_API_TOKEN=... npx wrangler deploy --env production --config workers/api-proxy/wrangler.toml
+```
+
+#### Step 5: Configure DNS CNAMEs
+
+Get your zone ID from Cloudflare API:
+```bash
+curl -s -X GET "https://api.cloudflare.com/client/v4/zones" \
+  -H "Authorization: Bearer <TOKEN>" | jq '.result[] | select(.name=="chronicle.sh") | .id'
+```
+
+Delete old A records and create CNAMEs:
+```bash
+# Delete old A record for api.chronicle.sh
+curl -X DELETE "https://api.cloudflare.com/client/v4/zones/<ZONE_ID>/dns_records/<RECORD_ID>" \
+  -H "Authorization: Bearer <TOKEN>"
+
+# Create CNAME for API
 curl -X POST "https://api.cloudflare.com/client/v4/zones/<ZONE_ID>/dns_records" \
   -H "Authorization: Bearer <TOKEN>" \
   -H "Content-Type: application/json" \
-  -d '{"type":"A","name":"chronicle.sh","content":"<IP>","proxied":true}'
+  -d '{"type":"CNAME","name":"api.chronicle.sh","content":"<app_id>-3001.dstack-pha-prod5.phala.network","proxied":true}'
+
+# Create CNAME for Frontend
+curl -X POST "https://api.cloudflare.com/client/v4/zones/<ZONE_ID>/dns_records" \
+  -H "Authorization: Bearer <TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{"type":"CNAME","name":"app.chronicle.sh","content":"<app_id>.dstack-pha-prod5.phala.network","proxied":true}'
 ```
+
+#### Step 6: Verify
+
+```bash
+# Test frontend
+curl -sI https://app.chronicle.sh/
+
+# Test API
+curl -sI https://api.chronicle.sh/api/offerings
+```
+
+---
+
+### Option 2: Simple CNAME (No Worker)
+
+For simple deployments without API routing, use direct CNAMEs:
+
+```bash
+# Create CNAME pointing directly to Phala
+curl -X POST "https://api.cloudflare.com/client/v4/zones/<ZONE_ID>/dns_records" \
+  -H "Authorization: Bearer <TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{"type":"CNAME","name":"api.chronicle.sh","content":"<app_id>-3001.dstack-pha-prod5.phala.network","proxied":true}'
+```
+
+Note: This only works for the specific port - no path routing.
 
 ### Note on Cloudflare Access
 

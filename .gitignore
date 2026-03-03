@@ -42,5 +42,14 @@ temp/
 agent/config.json
 agent/active-bounties.json
 
-# Frontend
-frontend/.env
+# Phala
+.phala-cloud/
+
+# Turborepo
+.turbo/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+.env.phala
