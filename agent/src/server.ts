@@ -10,6 +10,7 @@ import { UploadService } from '../src/services/upload.js';
 import { pricingService } from '../src/services/pricing.js';
 import { generateText, generateImage, editImage, generateVideo } from '../src/handlers/ai_generate.js';
 import { handleAgentChat, executeTool } from '../src/services/agent.js';
+import { getAcpCatalog } from '../src/acp/catalog.js';
 
 const app = express();
 app.use(cors({
@@ -81,7 +82,7 @@ app.use(
         accepts: [
           {
             scheme: 'exact',
-            price: '$0.01',
+            price: '$0.05',
             network: networkChainId,
             payTo: EVM_ADDRESS,
           },
@@ -93,7 +94,7 @@ app.use(
         accepts: [
           {
             scheme: 'exact',
-            price: '$0.05',
+            price: '$0.10',
             network: networkChainId,
             payTo: EVM_ADDRESS,
           },
@@ -105,7 +106,7 @@ app.use(
         accepts: [
           {
             scheme: 'exact',
-            price: '$0.05',
+            price: '$0.10',
             network: networkChainId,
             payTo: EVM_ADDRESS,
           },
@@ -117,19 +118,19 @@ app.use(
         accepts: [
           {
             scheme: 'exact',
-            price: '$0.10',
+            price: '$1.00',
             network: networkChainId,
             payTo: EVM_ADDRESS,
           },
         ],
-        description: 'AI video generation',
+        description: 'AI video generation (3-5s)',
         mimeType: 'application/json',
       },
       'POST /api/ai/agent': {
         accepts: [
           {
             scheme: 'exact',
-            price: '$0.02',
+            price: '$0.10',
             network: networkChainId,
             payTo: EVM_ADDRESS,
           },
@@ -141,7 +142,7 @@ app.use(
         accepts: [
           {
             scheme: 'exact',
-            price: '$0.05',
+            price: '$0.10',
             network: networkChainId,
             payTo: EVM_ADDRESS,
           },
@@ -256,6 +257,26 @@ app.get('/api/price', async (req, res) => {
   }
 });
 
+app.get('/api/acp/catalog', (_req, res) => {
+  const network = (process.env.ACP_NETWORK || NETWORK || 'base') as string;
+  const offerings = getAcpCatalog({ includeDisabled: true }).map((entry) => ({
+    id: entry.id,
+    description: entry.description,
+    priceUsd: entry.priceUsd,
+    slaMinutes: entry.slaMinutes,
+    enabled: entry.enabled,
+    maxBytes: entry.maxBytes ?? null,
+    requirementSchema: entry.requirementSchema,
+    deliverableShape: entry.deliverableShape,
+  }));
+
+  res.json({
+    channel: 'acp',
+    network,
+    offerings,
+  });
+});
+
 app.get('/api/ai/status', (req, res) => {
   const chutesConfigured = !!process.env.CHUTES_API_KEY;
   res.json({
@@ -263,10 +284,10 @@ app.get('/api/ai/status', (req, res) => {
     chutesConfigured,
     network: NETWORK,
     rates: {
-      text: '$0.01',
-      image: '$0.05',
-      imageEdit: '$0.05',
-      video: '$0.10',
+      text: '$0.05',
+      image: '$0.10',
+      imageEdit: '$0.10',
+      video: '$1.00',
     },
   });
 });
@@ -480,10 +501,16 @@ app.post('/api/ai/video', async (req, res) => {
 
 const PORT = process.env.PORT || 3001;
 
-app.listen(PORT, () => {
-  console.log(`CHRONICLE API running on port ${PORT}`);
-  console.log(`Network: ${NETWORK} (${networkChainId})`);
-  console.log(`Payment receiver: ${EVM_ADDRESS}`);
-});
+export function createApp(): express.Express {
+  return app;
+}
+
+export function startHttpServer(port = Number(PORT)) {
+  return app.listen(port, () => {
+    console.log(`CHRONICLE API running on port ${port}`);
+    console.log(`Network: ${NETWORK} (${networkChainId})`);
+    console.log(`Payment receiver: ${EVM_ADDRESS}`);
+  });
+}
 
 export default app;

@@ -1,5 +1,7 @@
 # CHRONICLE Seller Reference
 
+> Legacy note: this file describes Chronicle's earlier single-offering ACP experiment. The current ACP source of truth is `agent/src/services/acp.ts`, `agent/src/acp/catalog.ts`, and `dev-docs/docs/acp.md`.
+
 ## Overview
 
 CHRONICLE is a storage offering on the Virtuals Protocol ACP marketplace. It provides permanent data storage on Arweave with x402 micropayment support.

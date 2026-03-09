@@ -1,5 +1,5 @@
 services:
-  agent:
+  agent-api:
     build:
       context: ./agent
     environment:
@@ -8,13 +8,44 @@ services:
       NETWORK: ${NETWORK:-base}
       PORT: 3001
       CHUTES_API_KEY: ${CHUTES_API_KEY}
+      ACP_ENABLED: ${ACP_ENABLED:-false}
+      ACP_WHITELISTED_WALLET_PRIVATE_KEY: ${ACP_WHITELISTED_WALLET_PRIVATE_KEY}
+      ACP_SESSION_KEY_ID: ${ACP_SESSION_KEY_ID}
+      ACP_AGENT_WALLET: ${ACP_AGENT_WALLET}
+      ACP_NETWORK: ${ACP_NETWORK:-base}
+      ACP_RPC_URL: ${ACP_RPC_URL}
+      ACP_ENABLE_IMAGE_OFFERING: ${ACP_ENABLE_IMAGE_OFFERING:-false}
+      ACP_ENABLE_VIDEO_OFFERING: ${ACP_ENABLE_VIDEO_OFFERING:-false}
     ports:
       - "3001:3001"
+
+  agent-acp:
+    build:
+      context: ./agent
+    command: ["node", "dist/src/bin/acp-seller.js"]
+    environment:
+      EVM_PRIVATE_KEY: ${EVM_PRIVATE_KEY}
+      EVM_ADDRESS: ${EVM_ADDRESS}
+      NETWORK: ${NETWORK:-base}
+      CHUTES_API_KEY: ${CHUTES_API_KEY}
+      ACP_ENABLED: ${ACP_ENABLED:-false}
+      ACP_WHITELISTED_WALLET_PRIVATE_KEY: ${ACP_WHITELISTED_WALLET_PRIVATE_KEY}
+      ACP_SESSION_KEY_ID: ${ACP_SESSION_KEY_ID}
+      ACP_AGENT_WALLET: ${ACP_AGENT_WALLET}
+      ACP_NETWORK: ${ACP_NETWORK:-base}
+      ACP_RPC_URL: ${ACP_RPC_URL}
+      ACP_QUEUE_DEPTH: ${ACP_QUEUE_DEPTH:-10}
+      ACP_CONCURRENCY_STORAGE: ${ACP_CONCURRENCY_STORAGE:-2}
+      ACP_CONCURRENCY_TEXT: ${ACP_CONCURRENCY_TEXT:-2}
+      ACP_CONCURRENCY_IMAGE: ${ACP_CONCURRENCY_IMAGE:-1}
+      ACP_CONCURRENCY_VIDEO: ${ACP_CONCURRENCY_VIDEO:-1}
+      ACP_ENABLE_IMAGE_OFFERING: ${ACP_ENABLE_IMAGE_OFFERING:-false}
+      ACP_ENABLE_VIDEO_OFFERING: ${ACP_ENABLE_VIDEO_OFFERING:-false}
 
   frontend:
     build:
       context: ./frontend
     depends_on:
-      - agent
+      - agent-api
     ports:
       - "8080:80"

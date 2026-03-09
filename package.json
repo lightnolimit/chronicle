@@ -5,6 +5,7 @@
   "scripts": {
     "install:all": "npm install && npm install --workspace=agent && npm install --workspace=frontend && npm install --workspace=docs && npm install --workspace=dev-docs",
     "dev": "npm run dev:api & npm run dev:frontend & wait",
+    "dev:virtuals": "npm run dev:agent & npm run dev:frontend & wait",
     "dev:docs": "npm run dev --workspace=docs",
     "dev:dev-docs": "npm run dev --workspace=dev-docs",
     "dev:frontend": "npm run dev --workspace=frontend",

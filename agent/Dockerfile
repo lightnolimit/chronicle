@@ -15,4 +15,4 @@ RUN npm run build
 
 EXPOSE 3001
 
-CMD ["node", "dist/src/server.js"]
+CMD ["node", "dist/src/bin/api.js"]

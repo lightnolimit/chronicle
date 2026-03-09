@@ -21,9 +21,13 @@ This guide covers deploying Chronicle to Phala Cloud with custom Cloudflare doma
 ┌─────────────────────┼───────────────────────────────────────┐
 │                     ▼          Phala Cloud (prod5)          │
 │  ┌─────────────────────┐  ┌─────────────────────────┐      │
-│  │ Frontend (nginx)    │  │ Agent (Express API)     │      │
+│  │ Frontend (nginx)    │  │ Agent API               │      │
 │  │ Port 80             │  │ Port 3001               │      │
 │  └─────────────────────┘  └─────────────────────────┘      │
+│                           ┌─────────────────────────┐      │
+│                           │ ACP Seller Runtime      │      │
+│                           │ outbound only           │      │
+│                           └─────────────────────────┘      │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -64,7 +68,7 @@ docker push phantasybot/chronicle-frontend:latest
 
 ```yaml
 services:
-  agent:
+  agent-api:
     image: phantasybot/chronicle-agent:latest
     environment:
       EVM_PRIVATE_KEY: ${EVM_PRIVATE_KEY}
@@ -75,10 +79,25 @@ services:
     ports:
       - "3001:3001"
 
+  agent-acp:
+    image: phantasybot/chronicle-agent:latest
+    command: ["node", "dist/src/bin/acp-seller.js"]
+    environment:
+      EVM_PRIVATE_KEY: ${EVM_PRIVATE_KEY}
+      EVM_ADDRESS: ${EVM_ADDRESS}
+      NETWORK: ${NETWORK:-base}
+      CHUTES_API_KEY: ${CHUTES_API_KEY}
+      ACP_ENABLED: ${ACP_ENABLED:-false}
+      ACP_WHITELISTED_WALLET_PRIVATE_KEY: ${ACP_WHITELISTED_WALLET_PRIVATE_KEY}
+      ACP_SESSION_KEY_ID: ${ACP_SESSION_KEY_ID}
+      ACP_AGENT_WALLET: ${ACP_AGENT_WALLET}
+      ACP_NETWORK: ${ACP_NETWORK:-base}
+      ACP_RPC_URL: ${ACP_RPC_URL}
+
   frontend:
     image: phantasybot/chronicle-frontend:latest
     depends_on:
-      - agent
+      - agent-api
     ports:
       - "80:80"
 ```
@@ -102,7 +121,7 @@ phala deploy --name chronicle \
 
 After deployment, Phala will provide:
 - **Frontend**: `https://<app_id>.dstack-pha-prod5.phala.network/`
-- **Agent**: `https://<app_id>-3001.dstack-pha-prod5.phala.network/`
+- **Agent API**: `https://<app_id>-3001.dstack-pha-prod5.phala.network/`
 
 Save the `<app_id>` for the next steps.
 
@@ -239,7 +258,7 @@ curl -sI https://<app_id>-3001.dstack-pha-prod5.phala.network/
 
 # Test custom domains (should work after DNS propagates)
 curl -sI https://app.chronicle.sh/
-curl -sI https://api.chronicle.sh/api/offerings
+curl -sI https://api.chronicle.sh/api/acp/catalog
 ```
 
 ## Troubleshooting

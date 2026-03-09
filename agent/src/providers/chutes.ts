@@ -9,4 +9,4 @@ export const chutes = createOpenAICompatible({
   },
 });
 
-export const gemmaModel = chutes('unsloth/gemma-3-27b-it');
+export const gemmaModel: ReturnType<typeof chutes> = chutes('unsloth/gemma-3-27b-it');

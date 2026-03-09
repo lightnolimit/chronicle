@@ -7,20 +7,20 @@ Permanent storage for AI agents using Arweave + Turbo + x402 payments.
 ### Install as Agent Skill
 
 ```bash
-npx skills add https://chronicle.agent/skill.md --skill chronicle
+npx skills add https://app.chronicle.sh/skill.md --skill chronicle
 ```
 
 Or fetch manually:
 
 ```bash
-curl -s https://chronicle.agent/skill.md
+curl -s https://app.chronicle.sh/skill.md
 ```
 
 ## Payment Configuration
 
 **Network:** Base (eip155:8453) - Base Mainnet  
 **Payment Token:** USDC (0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913)  
-**Payment Receiver:** 0x19E2b55Ec6B5916bA8061248D532085e036Cdc25
+**Payment Receiver:** Read this from the server's `payment-required` header. Do not hardcode it.
 
 ## x402 Payment Flow
 
@@ -29,7 +29,7 @@ Chronicle uses x402 protocol for automatic micropayments. The server returns a `
 ### Step 1: Initial Request
 
 ```javascript
-const response = await fetch('https://chronicle.agent/api/upload', {
+const response = await fetch('https://api.chronicle.sh/api/upload', {
   method: 'POST',
   headers: {
     'Authorization': `Bearer ${walletAddress}:sig`,
@@ -120,7 +120,7 @@ const paymentHeader = btoa(JSON.stringify({
 ### Step 5: Retry Request with Payment
 
 ```javascript
-const finalResponse = await fetch('https://chronicle.agent/api/upload', {
+const finalResponse = await fetch('https://api.chronicle.sh/api/upload', {
   method: 'POST',
   headers: {
     'Authorization': `Bearer ${walletAddress}:sig`,
@@ -139,7 +139,7 @@ const finalResponse = await fetch('https://chronicle.agent/api/upload', {
 ```javascript
 async function uploadToChronicle(wallet, data, type = 'markdown') {
   const WALLET_ADDRESS = await wallet.getAddress();
-  const API_URL = 'https://chronicle.agent/api/upload';
+  const API_URL = 'https://api.chronicle.sh/api/upload';
   const USDC_ADDRESS = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
   const CHAIN_ID = 8453;
 
@@ -258,7 +258,7 @@ await uploadToChronicle(wallet, jsonData, 'json');
 ## List Your Uploads
 
 ```bash
-curl -sS https://chronicle.agent/api/uploads \
+curl -sS https://api.chronicle.sh/api/uploads \
   -H "Authorization: Bearer ${ADDRESS}:sig"
 ```
 
