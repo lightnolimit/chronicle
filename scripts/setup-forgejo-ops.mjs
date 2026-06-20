@@ -32,9 +32,11 @@ async function forgejoApi(path, init = {}) {
   const text = await response.text();
   const body = text ? JSON.parse(text) : null;
   if (!response.ok) {
-    throw new Error(
+    const error = new Error(
       `Forgejo ${init.method || "GET"} ${path} failed: ${JSON.stringify(body)}`,
     );
+    error.status = response.status;
+    throw error;
   }
   return body;
 }
@@ -73,7 +75,12 @@ async function ensureForgejoRepo() {
     }
     return { repo: "exists", full_name: existing.full_name };
   } catch (error) {
-    if (!String(error.message).includes("404")) {
+    const status = error?.status;
+    const missing =
+      status === 404 ||
+      String(error?.message || "").includes("404") ||
+      String(error?.message || "").includes("couldn't be found");
+    if (!missing) {
       throw error;
     }
   }
