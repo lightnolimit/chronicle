@@ -197,9 +197,10 @@ async function main() {
     return;
   }
 
-  const workflowPath =
-    assignment.quest.execution?.workflowPath ||
-    (claimedTitle === profile.defaultQuest ? profile.workflowPath : null);
+  const workflowPath = acceptAny
+    ? profile.workflowPath
+    : assignment.quest.execution?.workflowPath ||
+      (claimedTitle === profile.defaultQuest ? profile.workflowPath : null);
 
   if (!workflowPath) {
     await reportSuccess(partyQuestUrl, apiKey, assignment, {
