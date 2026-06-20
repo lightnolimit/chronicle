@@ -18,7 +18,19 @@ if ! grep -q 'seedChronicleDevelopment' "${SEED_FILE}"; then
   printf '\n' >> "${SEED_FILE}"
   cat "${PATCH_FILE}" >> "${SEED_FILE}"
 else
-  echo "==> seedChronicleDevelopment already present in ${SEED_FILE}"
+  echo "==> Syncing seedChronicleDevelopment in ${SEED_FILE}"
+  SEED_FILE="${SEED_FILE}" PATCH_FILE="${PATCH_FILE}" node <<'NODE'
+const fs = require("node:fs");
+const seedPath = process.env.SEED_FILE;
+const patchPath = process.env.PATCH_FILE;
+const seed = fs.readFileSync(seedPath, "utf8");
+const patch = fs.readFileSync(patchPath, "utf8").trim();
+const pattern = /export const seedChronicleDevelopment = mutation\([\s\S]*?\n\}\);\n?/;
+if (!pattern.test(seed)) {
+  throw new Error("seedChronicleDevelopment block not found in seed.ts");
+}
+fs.writeFileSync(seedPath, seed.replace(pattern, `${patch}\n`));
+NODE
 fi
 
 cd "${PARTY_QUEST_DIR}"
