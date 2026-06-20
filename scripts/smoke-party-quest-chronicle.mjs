@@ -110,7 +110,7 @@ function runCommand(command, cwd, extraEnv = {}) {
     cwd,
     shell: true,
     encoding: "utf8",
-    env: { ...process.env, ...extraEnv },
+    env: { ...extraEnv, ...process.env },
   });
   return {
     ok: result.status === 0,
