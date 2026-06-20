@@ -30,8 +30,15 @@ async function forgejoApi(path, init = {}) {
     },
   });
   const text = await response.text();
-  const body = text ? JSON.parse(text) : null;
-  if (!response.ok) {
+  let body = null;
+  if (text) {
+    try {
+      body = JSON.parse(text);
+    } catch {
+      body = text;
+    }
+  }
+  if (!response.ok && response.status !== 204) {
     const error = new Error(
       `Forgejo ${init.method || "GET"} ${path} failed: ${JSON.stringify(body)}`,
     );
@@ -60,6 +67,16 @@ async function githubApi(path, init = {}) {
     );
   }
   return body;
+}
+
+async function verifyGithubPushAccess() {
+  const repo = await githubApi(`/repos/${githubRepo}`);
+  if (!repo?.permissions?.push) {
+    throw new Error(
+      `GITHUB_TOKEN lacks push access to ${githubRepo}. Use an owner or machine-user token.`,
+    );
+  }
+  return { defaultBranch: repo.default_branch, permissions: repo.permissions };
 }
 
 async function ensureForgejoRepo() {
@@ -110,30 +127,69 @@ async function ensureForgejoRepo() {
   }
 }
 
-async function ensurePushMirror() {
+function tokenizedMirrorUrl() {
+  return `https://x-access-token:${githubToken}@github.com/${githubRepo}.git`;
+}
+
+function mirrorNeedsRefresh(entry) {
+  if (!entry) return true;
+  const address = entry.remote_address || "";
+  if (!address.includes("x-access-token:")) return true;
+  if (entry.last_error?.trim()) return true;
+  return false;
+}
+
+async function deletePushMirror(remoteName) {
   const [owner, repo] = forgejoRepo.split("/");
-  const mirrors = await forgejoApi(`/repos/${owner}/${repo}/push_mirrors`);
-  const target = `https://github.com/${githubRepo}.git`;
-  const existing = Array.isArray(mirrors)
-    ? mirrors.find((entry) => entry.remote_address?.includes("github.com"))
-    : null;
-  if (existing) {
-    return { mirror: "exists", id: existing.id };
-  }
+  await forgejoApi(
+    `/repos/${owner}/${repo}/push_mirrors/${encodeURIComponent(remoteName)}`,
+    { method: "DELETE" },
+  );
+}
 
-  const remoteAddress = githubToken
-    ? `https://x-access-token:${githubToken}@github.com/${githubRepo}.git`
-    : target;
-
+async function createPushMirror() {
+  const [owner, repo] = forgejoRepo.split("/");
   const created = await forgejoApi(`/repos/${owner}/${repo}/push_mirrors`, {
     method: "POST",
     body: JSON.stringify({
-      remote_address: remoteAddress,
+      remote_address: tokenizedMirrorUrl(),
       sync_on_commit: true,
       interval: "10m",
     }),
   });
-  return { mirror: "created", id: created.id };
+  return created;
+}
+
+async function syncPushMirror(remoteName) {
+  const [owner, repo] = forgejoRepo.split("/");
+  try {
+    await forgejoApi(
+      `/repos/${owner}/${repo}/push_mirrors/${encodeURIComponent(remoteName)}/sync`,
+      { method: "POST", body: JSON.stringify({}) },
+    );
+    return { synced: true };
+  } catch {
+    return { synced: false, note: "Mirror sync endpoint unavailable; sync_on_commit remains enabled." };
+  }
+}
+
+async function ensurePushMirror() {
+  const mirrors = await forgejoApi(`/repos/${forgejoRepo.split("/")[0]}/${forgejoRepo.split("/")[1]}/push_mirrors`);
+  const existing = Array.isArray(mirrors)
+    ? mirrors.find((entry) => entry.remote_address?.includes("github.com"))
+    : null;
+
+  if (mirrorNeedsRefresh(existing)) {
+    if (existing?.remote_name) {
+      await deletePushMirror(existing.remote_name);
+    }
+    const created = await createPushMirror();
+    await syncPushMirror(created.remote_name || existing?.remote_name);
+    return { mirror: existing ? "recreated" : "created", remoteName: created.remote_name };
+  }
+
+  await syncPushMirror(existing.remote_name);
+  return { mirror: "exists", remoteName: existing.remote_name };
 }
 
 async function main() {
@@ -142,6 +198,7 @@ async function main() {
   }
 
   const results = {
+    github: await verifyGithubPushAccess(),
     forgejoRepo: await ensureForgejoRepo(),
     pushMirror: await ensurePushMirror(),
   };
