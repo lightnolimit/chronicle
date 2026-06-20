@@ -12,10 +12,23 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const AGENTS = [
-  "phantasy-marketing",
-  "phantasy-research",
-  "phantasy-debug",
-  "phantasy-code",
+  {
+    id: "phantasy-marketing",
+    questTitle: "Forgejo CI workflow present",
+  },
+  {
+    id: "phantasy-research",
+    questTitle: "Campaign manifest present",
+  },
+  {
+    id: "phantasy-debug",
+    questTitle: "Forgejo CI failure response",
+    claimOnly: true,
+  },
+  {
+    id: "phantasy-code",
+    questTitle: "Agent package present",
+  },
 ];
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
@@ -56,22 +69,24 @@ function reseedQuests() {
   }
 }
 
-function runAgent(agentId) {
+function runAgent(spec) {
+  const agentId = spec.id;
   const credentialsEnv = join(envDir, `${agentId}.env`);
   process.stdout.write(`\n=== ${agentId} ===\n`);
-  const result = spawnSync(
-    process.execPath,
-    [smokeScript, "--accept-any", ...extraArgs],
-    {
+  const smokeArgs = [...extraArgs];
+  if (spec.claimOnly) {
+    smokeArgs.push("--claim-only");
+  }
+  const result = spawnSync(process.execPath, [smokeScript, ...smokeArgs], {
       cwd: repoRoot,
       env: {
         ...process.env,
         AGENT: agentId,
+        QUEST_TITLE: spec.questTitle,
         CHRONICLE_REPO: repoRoot,
         CAMPAIGN_SLUG: "chronicle-development",
         CREDENTIALS_ENV: credentialsEnv,
         SMOKE_EVIDENCE_JSONL: evidenceJsonl,
-        ACCEPT_ANY_QUEST: "1",
       },
       encoding: "utf8",
       stdio: ["ignore", "pipe", "pipe"],

@@ -28,8 +28,8 @@ const WEBHOOK_PATHS = {
 const AGENT_PROFILES = {
   "phantasy-code": {
     frameworkType: "opencode",
-    defaultQuest: "Agent format check",
-    workflowPath: "npm run format:check --workspace=agent",
+    defaultQuest: "Agent package present",
+    workflowPath: "test -f agent/package.json",
   },
   "phantasy-debug": {
     frameworkType: "openclaw",

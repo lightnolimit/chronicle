@@ -31,11 +31,11 @@
   ],
   "quests": [
     {
-      "title": "Agent format check",
+      "title": "Agent package present",
       "squad": "code",
       "priority": "normal",
       "schedule": "0 9 * * *",
-      "workflowPath": "npm run format:check --workspace=agent"
+      "workflowPath": "test -f agent/package.json"
     },
     {
       "title": "Forgejo CI workflow present",

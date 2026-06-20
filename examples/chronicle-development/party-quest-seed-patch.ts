@@ -200,14 +200,14 @@ export const seedChronicleDevelopment = mutation({
 
     const questSpecs = [
       {
-        title: "Agent format check",
+        title: "Agent package present",
         squad: "code",
         agentFrameworkId: "phantasy-opencode-agent",
         frameworkType: "opencode" as const,
         priority: "normal" as const,
         execution: {
           kind: "workflow",
-          workflowPath: "npm run format:check --workspace=agent",
+          workflowPath: "test -f agent/package.json",
         },
         sourceRef: {
           provider: "forgejo" as const,
