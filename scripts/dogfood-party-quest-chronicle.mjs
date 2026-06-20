@@ -100,7 +100,6 @@ if (reseedEach) reseedQuests();
 
 let failures = 0;
 for (const agent of AGENTS) {
-  if (reseedEach) reseedQuests();
   if (runAgent(agent) !== 0) failures += 1;
 }
 
