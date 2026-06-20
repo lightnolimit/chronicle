@@ -1,0 +1,65 @@
+{
+  "slug": "chronicle-development",
+  "title": "Chronicle Development",
+  "description": "Code, debug, marketing, and research squads maintain Chronicle on Forgejo via shared Phantasy agents.",
+  "repoProvider": "forgejo",
+  "repoOwner": "chronicle",
+  "repoName": "chronicle",
+  "defaultBranch": "main",
+  "repoUrl": "https://forgejo.phantasy.bot/chronicle/chronicle",
+  "squads": [
+    {
+      "slug": "code",
+      "name": "Code",
+      "description": "Agent tests, API changes, and release hygiene."
+    },
+    {
+      "slug": "debug",
+      "name": "Debug",
+      "description": "CI failures, flakes, and incident triage."
+    },
+    {
+      "slug": "marketing",
+      "name": "Marketing",
+      "description": "Docs, product copy, and public documentation."
+    },
+    {
+      "slug": "research",
+      "name": "Research",
+      "description": "Campaign health and integration research."
+    }
+  ],
+  "quests": [
+    {
+      "title": "Agent tests on main",
+      "squad": "code",
+      "priority": "normal",
+      "schedule": "0 9 * * *",
+      "workflowPath": "npm run test --workspace=agent"
+    },
+    {
+      "title": "Docs check",
+      "squad": "marketing",
+      "priority": "normal",
+      "schedule": "0 10 * * 1",
+      "workflowPath": "npm run docs:check"
+    },
+    {
+      "title": "Forgejo CI failure response",
+      "squad": "debug",
+      "priority": "high",
+      "sourceRef": {
+        "provider": "forgejo",
+        "kind": "repository",
+        "repoOwner": "chronicle",
+        "repoName": "chronicle"
+      }
+    },
+    {
+      "title": "Campaign manifest present",
+      "squad": "research",
+      "priority": "normal",
+      "workflowPath": "test -f examples/chronicle-development/.party-quest/campaign.json"
+    }
+  ]
+}
