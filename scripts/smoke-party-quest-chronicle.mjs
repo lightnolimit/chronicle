@@ -28,8 +28,8 @@ const WEBHOOK_PATHS = {
 const AGENT_PROFILES = {
   "phantasy-code": {
     frameworkType: "opencode",
-    defaultQuest: "Agent package present",
-    workflowPath: "test -f agent/package.json",
+    defaultQuest: "Agent test suite",
+    workflowPath: "npm run test --workspace=agent",
   },
   "phantasy-debug": {
     frameworkType: "openclaw",
@@ -38,13 +38,14 @@ const AGENT_PROFILES = {
   },
   "phantasy-marketing": {
     frameworkType: "phantasy",
-    defaultQuest: "Forgejo CI workflow present",
-    workflowPath: "test -f .forgejo/workflows/ci.yml",
+    defaultQuest: "Agent format check",
+    workflowPath: "npm run format:check --workspace=agent",
   },
   "phantasy-research": {
     frameworkType: "hermes",
-    defaultQuest: "Campaign manifest present",
-    workflowPath: "test -f examples/chronicle-development/.party-quest/campaign.json",
+    defaultQuest: "Forgejo mirror healthy",
+    workflowPath:
+      "FORGEJO_REPO=chronicle/chronicle node scripts/verify-forgejo-mirror.mjs",
   },
 };
 
@@ -104,12 +105,12 @@ async function postJson(url, body, apiKey) {
   return payload;
 }
 
-function runCommand(command, cwd) {
+function runCommand(command, cwd, extraEnv = {}) {
   const result = spawnSync(command, {
     cwd,
     shell: true,
     encoding: "utf8",
-    env: process.env,
+    env: { ...process.env, ...extraEnv },
   });
   return {
     ok: result.status === 0,
@@ -232,7 +233,7 @@ async function main() {
     apiKey,
   );
 
-  const commandResult = runCommand(workflowPath, repoPath);
+  const commandResult = runCommand(workflowPath, repoPath, credentialsEnv);
   evidence.executed = true;
   evidence.command = workflowPath;
   evidence.commandOk = commandResult.ok;

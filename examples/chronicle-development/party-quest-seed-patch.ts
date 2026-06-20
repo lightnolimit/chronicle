@@ -200,14 +200,14 @@ export const seedChronicleDevelopment = mutation({
 
     const questSpecs = [
       {
-        title: "Agent package present",
+        title: "Agent test suite",
         squad: "code",
         agentFrameworkId: "phantasy-opencode-agent",
         frameworkType: "opencode" as const,
         priority: "normal" as const,
         execution: {
           kind: "workflow",
-          workflowPath: "test -f agent/package.json",
+          workflowPath: "npm run test --workspace=agent",
         },
         sourceRef: {
           provider: "forgejo" as const,
@@ -218,14 +218,14 @@ export const seedChronicleDevelopment = mutation({
         },
       },
       {
-        title: "Forgejo CI workflow present",
+        title: "Agent format check",
         squad: "marketing",
         agentFrameworkId: "phantasy-phantasy-agent",
         frameworkType: "phantasy" as const,
         priority: "normal" as const,
         execution: {
           kind: "workflow",
-          workflowPath: "test -f .forgejo/workflows/ci.yml",
+          workflowPath: "npm run format:check --workspace=agent",
         },
         sourceRef: {
           provider: "forgejo" as const,
@@ -250,14 +250,15 @@ export const seedChronicleDevelopment = mutation({
         },
       },
       {
-        title: "Campaign manifest present",
+        title: "Forgejo mirror healthy",
         squad: "research",
         agentFrameworkId: "phantasy-hermes-agent",
         frameworkType: "hermes" as const,
         priority: "normal" as const,
         execution: {
           kind: "workflow",
-          workflowPath: "test -f examples/chronicle-development/.party-quest/campaign.json",
+          workflowPath:
+            "FORGEJO_REPO=chronicle/chronicle node scripts/verify-forgejo-mirror.mjs",
         },
         sourceRef: {
           provider: "forgejo" as const,

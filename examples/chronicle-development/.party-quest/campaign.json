@@ -31,18 +31,18 @@
   ],
   "quests": [
     {
-      "title": "Agent package present",
+      "title": "Agent test suite",
       "squad": "code",
       "priority": "normal",
       "schedule": "0 9 * * *",
-      "workflowPath": "test -f agent/package.json"
+      "workflowPath": "npm run test --workspace=agent"
     },
     {
-      "title": "Forgejo CI workflow present",
+      "title": "Agent format check",
       "squad": "marketing",
       "priority": "normal",
       "schedule": "0 10 * * 1",
-      "workflowPath": "test -f .forgejo/workflows/ci.yml"
+      "workflowPath": "npm run format:check --workspace=agent"
     },
     {
       "title": "Forgejo CI failure response",
@@ -56,10 +56,11 @@
       }
     },
     {
-      "title": "Campaign manifest present",
+      "title": "Forgejo mirror healthy",
       "squad": "research",
       "priority": "normal",
-      "workflowPath": "test -f examples/chronicle-development/.party-quest/campaign.json"
+      "schedule": "0 11 * * 3",
+      "workflowPath": "FORGEJO_REPO=chronicle/chronicle node scripts/verify-forgejo-mirror.mjs"
     }
   ]
 }
