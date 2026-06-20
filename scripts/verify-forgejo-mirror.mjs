@@ -9,7 +9,11 @@ const forgejoBase = (
   process.env.FORGEJO_BASE_URL || "https://forgejo.phantasy.bot"
 ).replace(/\/$/, "");
 const forgejoRepo = process.env.FORGEJO_REPO?.trim();
-const forgejoToken = process.env.FORGEJO_TOKEN?.trim();
+const forgejoToken = (
+  process.env.FORGEJO_MIRROR_TOKEN ||
+  process.env.FORGEJO_ADMIN_TOKEN ||
+  process.env.FORGEJO_TOKEN
+)?.trim();
 const forgejoUser = process.env.FORGEJO_ADMIN_USER?.trim() || "phantasy";
 
 async function main() {

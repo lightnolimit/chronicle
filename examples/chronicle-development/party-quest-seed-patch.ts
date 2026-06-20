@@ -275,6 +275,23 @@ export const seedChronicleDevelopment = mutation({
       .withIndex("by_campaign", (q) => q.eq("campaignId", campaignId!))
       .collect();
 
+    const activeTitles = new Set(questSpecs.map((spec) => spec.title));
+    let archivedQuests = 0;
+    for (const quest of existingQuests) {
+      if (activeTitles.has(quest.title)) continue;
+      await ctx.db.patch(quest._id, {
+        status: "cancelled",
+        claimedByAgentId: undefined,
+        activeRunId: undefined,
+        checkoutRunId: undefined,
+        leaseExpiresAt: undefined,
+        workspaceLockExpiresAt: undefined,
+        nextClaimAt: undefined,
+        updatedAt: now,
+      });
+      archivedQuests += 1;
+    }
+
     let createdQuests = 0;
     let updatedQuests = 0;
     for (const [index, spec] of questSpecs.entries()) {
@@ -333,6 +350,7 @@ export const seedChronicleDevelopment = mutation({
       wiredSquadMembers,
       createdQuests,
       updatedQuests,
+      archivedQuests,
       repoUrl,
     };
   },
