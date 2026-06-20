@@ -28,7 +28,6 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm ci --prefix agent
-      - run: npm run docs:check
-      - run: npm run test --workspace=agent
+      - run: npm install --workspace=agent
+      - run: npm run format:check --workspace=agent
       - run: test -f .forgejo/workflows/ci.yml

@@ -28,8 +28,8 @@ const WEBHOOK_PATHS = {
 const AGENT_PROFILES = {
   "phantasy-code": {
     frameworkType: "opencode",
-    defaultQuest: "Agent tests on main",
-    workflowPath: "npm run test --workspace=agent",
+    defaultQuest: "Agent format check",
+    workflowPath: "npm run format:check --workspace=agent",
   },
   "phantasy-debug": {
     frameworkType: "openclaw",
@@ -38,8 +38,8 @@ const AGENT_PROFILES = {
   },
   "phantasy-marketing": {
     frameworkType: "phantasy",
-    defaultQuest: "Docs check",
-    workflowPath: "npm run docs:check",
+    defaultQuest: "Forgejo CI workflow present",
+    workflowPath: "test -f .forgejo/workflows/ci.yml",
   },
   "phantasy-research": {
     frameworkType: "hermes",

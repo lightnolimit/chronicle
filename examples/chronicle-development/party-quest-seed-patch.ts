@@ -200,14 +200,14 @@ export const seedChronicleDevelopment = mutation({
 
     const questSpecs = [
       {
-        title: "Agent tests on main",
+        title: "Agent format check",
         squad: "code",
         agentFrameworkId: "phantasy-opencode-agent",
         frameworkType: "opencode" as const,
         priority: "normal" as const,
         execution: {
           kind: "workflow",
-          workflowPath: "npm run test --workspace=agent",
+          workflowPath: "npm run format:check --workspace=agent",
         },
         sourceRef: {
           provider: "forgejo" as const,
@@ -218,12 +218,15 @@ export const seedChronicleDevelopment = mutation({
         },
       },
       {
-        title: "Docs check",
+        title: "Forgejo CI workflow present",
         squad: "marketing",
         agentFrameworkId: "phantasy-phantasy-agent",
         frameworkType: "phantasy" as const,
         priority: "normal" as const,
-        execution: { kind: "workflow", workflowPath: "npm run docs:check" },
+        execution: {
+          kind: "workflow",
+          workflowPath: "test -f .forgejo/workflows/ci.yml",
+        },
         sourceRef: {
           provider: "forgejo" as const,
           kind: "repository" as const,

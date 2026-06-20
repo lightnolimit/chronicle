@@ -20,7 +20,7 @@ git -C "${CHRONICLE_REPO}" pull --ff-only origin main || true
 echo "==> Install workspace deps for dogfood commands"
 cd "${CHRONICLE_REPO}"
 npm ci
-npm ci --prefix agent
+npm install --workspace=agent
 
 echo "==> Party Quest seed patch + deploy"
 bash "${CHRONICLE_REPO}/examples/chronicle-development/spectre/redeploy-party-quest-seed.sh"

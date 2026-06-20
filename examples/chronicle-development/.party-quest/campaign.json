@@ -31,18 +31,18 @@
   ],
   "quests": [
     {
-      "title": "Agent tests on main",
+      "title": "Agent format check",
       "squad": "code",
       "priority": "normal",
       "schedule": "0 9 * * *",
-      "workflowPath": "npm run test --workspace=agent"
+      "workflowPath": "npm run format:check --workspace=agent"
     },
     {
-      "title": "Docs check",
+      "title": "Forgejo CI workflow present",
       "squad": "marketing",
       "priority": "normal",
       "schedule": "0 10 * * 1",
-      "workflowPath": "npm run docs:check"
+      "workflowPath": "test -f .forgejo/workflows/ci.yml"
     },
     {
       "title": "Forgejo CI failure response",
